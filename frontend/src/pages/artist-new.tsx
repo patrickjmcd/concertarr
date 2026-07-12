@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { ConcertFlag } from "@/components/concert-flag"
 import { api, type SearchResultItem } from "@/lib/api"
 import { toast } from "sonner"
 
@@ -115,7 +116,10 @@ export function ArtistNew() {
                   <TableBody>
                     {results.map((r) => (
                       <TableRow key={r.identifier}>
-                        <TableCell>{r.title}</TableCell>
+                        <TableCell className="flex items-center">
+                          {r.title}
+                          <ConcertFlag likelyConcert={r.likely_concert} />
+                        </TableCell>
                         <TableCell>{(r.date ?? "").slice(0, 10)}</TableCell>
                         <TableCell className="font-mono text-xs text-muted-foreground">
                           {r.identifier}

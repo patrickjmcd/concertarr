@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
+import { ConcertFlag } from "@/components/concert-flag"
 import { api, type DiscoverArtistItem } from "@/lib/api"
 
 export function Discover() {
@@ -74,16 +75,19 @@ export function Discover() {
                     <TableCell className="max-w-40 truncate font-medium" title={a.name}>
                       {a.name}
                     </TableCell>
-                    <TableCell className="max-w-56 truncate">
-                      <a
-                        href={`https://archive.org/details/${a.sample_identifier}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block truncate underline-offset-4 hover:underline"
-                        title={a.sample_title}
-                      >
-                        {a.sample_title}
-                      </a>
+                    <TableCell className="max-w-56">
+                      <div className="flex items-center">
+                        <a
+                          href={`https://archive.org/details/${a.sample_identifier}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="truncate underline-offset-4 hover:underline"
+                          title={a.sample_title}
+                        >
+                          {a.sample_title}
+                        </a>
+                        <ConcertFlag likelyConcert={a.likely_concert} />
+                      </div>
                     </TableCell>
                     <TableCell className="text-right whitespace-nowrap text-muted-foreground">
                       {a.count}

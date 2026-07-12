@@ -4,6 +4,7 @@ from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, Uni
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
+from app.heuristics import looks_like_concert
 
 
 def utcnow() -> datetime:
@@ -45,3 +46,7 @@ class Concert(Base):
     downloaded_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     artist: Mapped["Artist"] = relationship(back_populates="concerts")
+
+    @property
+    def likely_concert(self) -> bool:
+        return looks_like_concert(self.title)

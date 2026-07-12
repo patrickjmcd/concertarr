@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
 import { StatusBadge } from "@/components/status-badge"
+import { ConcertFlag } from "@/components/concert-flag"
 import { formatDateTime } from "@/lib/format"
 import { api, type DashboardData } from "@/lib/api"
 
@@ -101,13 +102,16 @@ export function Dashboard() {
                     <TableRow key={c.id}>
                       <TableCell className="whitespace-nowrap">{c.artist_name}</TableCell>
                       <TableCell className="max-w-sm">
-                        <Link
-                          to={`/concerts/${c.id}`}
-                          className="block truncate underline-offset-4 hover:underline"
-                          title={c.title}
-                        >
-                          {c.title}
-                        </Link>
+                        <div className="flex items-center">
+                          <Link
+                            to={`/concerts/${c.id}`}
+                            className="truncate underline-offset-4 hover:underline"
+                            title={c.title}
+                          >
+                            {c.title}
+                          </Link>
+                          <ConcertFlag likelyConcert={c.likely_concert} />
+                        </div>
                       </TableCell>
                       <TableCell className="text-muted-foreground">{c.show_date ?? "-"}</TableCell>
                       <TableCell>
@@ -151,15 +155,18 @@ export function Dashboard() {
                     <TableRow key={item.identifier}>
                       <TableCell className="whitespace-nowrap">{item.creator ?? "-"}</TableCell>
                       <TableCell className="max-w-sm">
-                        <a
-                          href={`https://archive.org/details/${item.identifier}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block truncate underline-offset-4 hover:underline"
-                          title={item.title}
-                        >
-                          {item.title}
-                        </a>
+                        <div className="flex items-center">
+                          <a
+                            href={`https://archive.org/details/${item.identifier}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="truncate underline-offset-4 hover:underline"
+                            title={item.title}
+                          >
+                            {item.title}
+                          </a>
+                          <ConcertFlag likelyConcert={item.likely_concert} />
+                        </div>
                       </TableCell>
                       <TableCell className="text-muted-foreground">{item.date ?? "-"}</TableCell>
                       <TableCell>

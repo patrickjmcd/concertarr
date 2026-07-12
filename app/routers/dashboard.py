@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app import archive_client
 from app.db import get_db
+from app.heuristics import looks_like_concert
 from app.models import Artist, Concert
 from app.schemas import ArtistOut, ConcertOut, ConcertWithArtistOut, DashboardOut, GlobalRecentItem
 
@@ -41,6 +42,7 @@ def dashboard(db: Session = Depends(get_db)):
             date=(d.get("date") or "")[:10] or None,
             creator=d.get("creator") if isinstance(d.get("creator"), str) else None,
             monitored=(d.get("creator") or "").strip().lower() in monitored_names,
+            likely_concert=looks_like_concert(d.get("title")),
         )
         for d in docs
         if d.get("identifier")

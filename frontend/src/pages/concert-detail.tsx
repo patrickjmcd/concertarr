@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { StatusBadge } from "@/components/status-badge"
+import { ConcertFlag } from "@/components/concert-flag"
 import { formatBytes, formatDateTime } from "@/lib/format"
 import { api, type ConcertWithArtist, type TrackListResult } from "@/lib/api"
 import { toast } from "sonner"
@@ -62,7 +63,10 @@ export function ConcertDetail() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">{concert.title}</h1>
+        <h1 className="flex items-center text-2xl font-semibold tracking-tight">
+          {concert.title}
+          <ConcertFlag likelyConcert={concert.likely_concert} />
+        </h1>
         {concert.status === "new" && (
           <Button onClick={handleDownloadNow} disabled={busy}>
             Download Now

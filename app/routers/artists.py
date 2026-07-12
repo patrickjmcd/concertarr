@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app import archive_client
 from app.db import get_db
+from app.heuristics import looks_like_concert
 from app.models import Artist
 from app.schemas import (
     ArtistCreate,
@@ -35,7 +36,12 @@ def preview_artist(payload: ArtistCreate):
     try:
         docs = archive_client.search_items(effective_query, rows=20)
         results = [
-            SearchResultItem(identifier=d.get("identifier", ""), title=d.get("title", ""), date=d.get("date"))
+            SearchResultItem(
+                identifier=d.get("identifier", ""),
+                title=d.get("title", ""),
+                date=d.get("date"),
+                likely_concert=looks_like_concert(d.get("title")),
+            )
             for d in docs
         ]
         error = None

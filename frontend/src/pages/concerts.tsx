@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
 import { StatusBadge } from "@/components/status-badge"
+import { ConcertFlag } from "@/components/concert-flag"
 import { api, type ConcertWithArtist } from "@/lib/api"
 import { toast } from "sonner"
 
@@ -122,13 +123,16 @@ export function Concerts() {
                       </TableCell>
                       <TableCell className="whitespace-nowrap">{c.artist_name}</TableCell>
                       <TableCell className="max-w-sm">
-                        <Link
-                          to={`/concerts/${c.id}`}
-                          className="block truncate underline-offset-4 hover:underline"
-                          title={c.title}
-                        >
-                          {c.title}
-                        </Link>
+                        <div className="flex items-center">
+                          <Link
+                            to={`/concerts/${c.id}`}
+                            className="truncate underline-offset-4 hover:underline"
+                            title={c.title}
+                          >
+                            {c.title}
+                          </Link>
+                          <ConcertFlag likelyConcert={c.likely_concert} />
+                        </div>
                       </TableCell>
                       <TableCell className="text-muted-foreground">{c.show_date ?? "-"}</TableCell>
                       <TableCell>

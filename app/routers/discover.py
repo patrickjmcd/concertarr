@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app import archive_client
 from app.db import SessionLocal
+from app.heuristics import looks_like_concert
 from app.models import Artist
 from app.schemas import DiscoverArtistItem, DiscoverArtistsOut
 
@@ -42,14 +43,18 @@ def _aggregate_by_creator(docs: list[dict], limit: int) -> list[DiscoverArtistIt
         if creator is None:
             continue
         key = creator.lower()
+        title = doc.get("title", "")
         if key not in counts:
             counts[key] = {
                 "name": creator,
                 "count": 0,
+                "concert_like_count": 0,
                 "sample_identifier": doc.get("identifier", ""),
-                "sample_title": doc.get("title", ""),
+                "sample_title": title,
             }
         counts[key]["count"] += 1
+        if looks_like_concert(title):
+            counts[key]["concert_like_count"] += 1
 
     items = [
         DiscoverArtistItem(
@@ -58,6 +63,7 @@ def _aggregate_by_creator(docs: list[dict], limit: int) -> list[DiscoverArtistIt
             sample_identifier=v["sample_identifier"],
             sample_title=v["sample_title"],
             monitored=v["name"].lower() in monitored_names,
+            likely_concert=v["concert_like_count"] >= v["count"] / 2,
         )
         for v in counts.values()
     ]

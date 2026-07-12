@@ -16,6 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { StatusBadge } from "@/components/status-badge"
+import { ConcertFlag } from "@/components/concert-flag"
 import { formatDateTime } from "@/lib/format"
 import { api, type Artist, type Concert } from "@/lib/api"
 import { toast } from "sonner"
@@ -180,13 +181,16 @@ export function ArtistDetail() {
                           )}
                         </TableCell>
                         <TableCell className="max-w-sm">
-                          <Link
-                            to={`/concerts/${c.id}`}
-                            className="block truncate underline-offset-4 hover:underline"
-                            title={c.title}
-                          >
-                            {c.title}
-                          </Link>
+                          <div className="flex items-center">
+                            <Link
+                              to={`/concerts/${c.id}`}
+                              className="truncate underline-offset-4 hover:underline"
+                              title={c.title}
+                            >
+                              {c.title}
+                            </Link>
+                            <ConcertFlag likelyConcert={c.likely_concert} />
+                          </div>
                         </TableCell>
                         <TableCell className="text-muted-foreground">{c.show_date ?? "-"}</TableCell>
                         <TableCell>
