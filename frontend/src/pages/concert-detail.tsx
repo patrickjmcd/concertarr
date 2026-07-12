@@ -89,7 +89,7 @@ export function ConcertDetail() {
           <StatusBadge status={concert.status} />
         </Row>
         <Row label="Date">{concert.show_date ?? "unknown"}</Row>
-        <Row label="Collection">{concert.collection ?? "-"}</Row>
+        <Row label="Source">{concert.source ?? "-"}</Row>
         <Row label="Identifier">
           <a
             href={`https://archive.org/details/${concert.identifier}`}

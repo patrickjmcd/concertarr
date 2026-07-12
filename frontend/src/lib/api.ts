@@ -23,6 +23,7 @@ export interface Concert {
   discovered_at: string
   downloaded_at: string | null
   likely_concert: boolean
+  source: string | null
 }
 
 export interface ConcertWithArtist extends Concert {
@@ -36,6 +37,7 @@ export interface GlobalRecentItem {
   creator: string | null
   monitored: boolean
   likely_concert: boolean
+  source: string | null
 }
 
 export interface DashboardData {
@@ -51,6 +53,7 @@ export interface SearchResultItem {
   title: string
   date: string | null
   likely_concert: boolean
+  source: string | null
 }
 
 export interface PreviewResult {
@@ -82,6 +85,7 @@ export interface DiscoverArtistItem {
   sample_title: string
   monitored: boolean
   likely_concert: boolean
+  source: string | null
 }
 
 export interface DiscoverArtistsResult {

@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ConcertFlag } from "@/components/concert-flag"
+import { SourceTag } from "@/components/source-tag"
 import { api, type SearchResultItem } from "@/lib/api"
 import { toast } from "sonner"
 
@@ -132,6 +133,7 @@ export function ArtistNew() {
                         <TableCell className="flex items-center">
                           {r.title}
                           <ConcertFlag likelyConcert={r.likely_concert} />
+                          <SourceTag source={r.source} />
                         </TableCell>
                         <TableCell>{(r.date ?? "").slice(0, 10)}</TableCell>
                         <TableCell className="font-mono text-xs text-muted-foreground">

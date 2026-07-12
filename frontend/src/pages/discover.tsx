@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ConcertFlag } from "@/components/concert-flag"
+import { SourceTag } from "@/components/source-tag"
 import { api, type DiscoverArtistItem } from "@/lib/api"
 
 export function Discover() {
@@ -87,6 +88,7 @@ export function Discover() {
                           {a.sample_title}
                         </a>
                         <ConcertFlag likelyConcert={a.likely_concert} />
+                        <SourceTag source={a.source} />
                       </div>
                     </TableCell>
                     <TableCell className="text-right whitespace-nowrap text-muted-foreground">

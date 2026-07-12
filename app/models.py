@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app import archive_client
 from app.db import Base
 from app.heuristics import looks_like_concert
 
@@ -50,3 +51,7 @@ class Concert(Base):
     @property
     def likely_concert(self) -> bool:
         return looks_like_concert(self.title)
+
+    @property
+    def source(self) -> str | None:
+        return archive_client.source_string(self.collection)

@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog"
 import { StatusBadge } from "@/components/status-badge"
 import { ConcertFlag } from "@/components/concert-flag"
+import { SourceTag } from "@/components/source-tag"
 import { formatDateTime } from "@/lib/format"
 import { api, type Artist, type Concert } from "@/lib/api"
 import { toast } from "sonner"
@@ -190,6 +191,7 @@ export function ArtistDetail() {
                               {c.title}
                             </Link>
                             <ConcertFlag likelyConcert={c.likely_concert} />
+                            <SourceTag source={c.source} />
                           </div>
                         </TableCell>
                         <TableCell className="text-muted-foreground">{c.show_date ?? "-"}</TableCell>

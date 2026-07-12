@@ -43,6 +43,7 @@ def dashboard(db: Session = Depends(get_db)):
             creator=d.get("creator") if isinstance(d.get("creator"), str) else None,
             monitored=(d.get("creator") or "").strip().lower() in monitored_names,
             likely_concert=looks_like_concert(d.get("title")),
+            source=archive_client.source_string(d.get("collection")),
         )
         for d in docs
         if d.get("identifier")

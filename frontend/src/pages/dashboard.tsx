@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
 import { StatusBadge } from "@/components/status-badge"
 import { ConcertFlag } from "@/components/concert-flag"
+import { SourceTag } from "@/components/source-tag"
 import { formatDateTime } from "@/lib/format"
 import { api, type DashboardData } from "@/lib/api"
 
@@ -111,6 +112,7 @@ export function Dashboard() {
                             {c.title}
                           </Link>
                           <ConcertFlag likelyConcert={c.likely_concert} />
+                          <SourceTag source={c.source} />
                         </div>
                       </TableCell>
                       <TableCell className="text-muted-foreground">{c.show_date ?? "-"}</TableCell>
@@ -166,6 +168,7 @@ export function Dashboard() {
                             {item.title}
                           </a>
                           <ConcertFlag likelyConcert={item.likely_concert} />
+                          <SourceTag source={item.source} />
                         </div>
                       </TableCell>
                       <TableCell className="text-muted-foreground">{item.date ?? "-"}</TableCell>

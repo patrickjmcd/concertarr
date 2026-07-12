@@ -51,6 +51,7 @@ def _aggregate_by_creator(docs: list[dict], limit: int) -> list[DiscoverArtistIt
                 "concert_like_count": 0,
                 "sample_identifier": doc.get("identifier", ""),
                 "sample_title": title,
+                "sample_source": archive_client.source_string(doc.get("collection")),
             }
         counts[key]["count"] += 1
         if looks_like_concert(title):
@@ -64,6 +65,7 @@ def _aggregate_by_creator(docs: list[dict], limit: int) -> list[DiscoverArtistIt
             sample_title=v["sample_title"],
             monitored=v["name"].lower() in monitored_names,
             likely_concert=v["concert_like_count"] >= v["count"] / 2,
+            source=v["sample_source"],
         )
         for v in counts.values()
     ]

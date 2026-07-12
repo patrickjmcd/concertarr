@@ -44,6 +44,7 @@ def preview_artist(payload: ArtistCreate):
                 title=d.get("title", ""),
                 date=d.get("date"),
                 likely_concert=looks_like_concert(d.get("title")),
+                source=archive_client.source_string(d.get("collection")),
             )
             for d in docs
         ]

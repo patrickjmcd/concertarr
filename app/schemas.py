@@ -32,6 +32,7 @@ class ConcertOut(BaseModel):
     discovered_at: datetime
     downloaded_at: datetime | None
     likely_concert: bool
+    source: str | None = None
 
 
 class ConcertWithArtistOut(ConcertOut):
@@ -50,6 +51,7 @@ class GlobalRecentItem(BaseModel):
     creator: str | None = None
     monitored: bool = False
     likely_concert: bool = True
+    source: str | None = None
 
 
 class DashboardOut(BaseModel):
@@ -65,6 +67,7 @@ class SearchResultItem(BaseModel):
     title: str
     date: str | None = None
     likely_concert: bool = True
+    source: str | None = None
 
 
 class PreviewOut(BaseModel):
@@ -110,6 +113,7 @@ class DiscoverArtistItem(BaseModel):
     sample_title: str
     monitored: bool = False
     likely_concert: bool = True
+    source: str | None = None
 
 
 class DiscoverArtistsOut(BaseModel):

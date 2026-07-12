@@ -8,6 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
 import { StatusBadge } from "@/components/status-badge"
 import { ConcertFlag } from "@/components/concert-flag"
+import { SourceTag } from "@/components/source-tag"
 import { api, type ConcertWithArtist } from "@/lib/api"
 import { toast } from "sonner"
 
@@ -132,6 +133,7 @@ export function Concerts() {
                             {c.title}
                           </Link>
                           <ConcertFlag likelyConcert={c.likely_concert} />
+                          <SourceTag source={c.source} />
                         </div>
                       </TableCell>
                       <TableCell className="text-muted-foreground">{c.show_date ?? "-"}</TableCell>

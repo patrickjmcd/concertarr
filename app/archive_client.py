@@ -27,6 +27,48 @@ TAPER_COLLECTIONS = [
 ]
 TAPER_COLLECTIONS_QUERY = "(" + " OR ".join(f"collection:({c})" for c in TAPER_COLLECTIONS) + ")"
 
+# Generic collection tags that don't identify a specific taper/uploader -- most of
+# the TAPER_COLLECTIONS scoping tags (broad categories, not a "who uploaded this"
+# identity) plus catch-alls like opensource_audio/community. Matched by prefix since
+# archive.org uses sub-variants (folksoundomy_music_unsorted, hifidelity_potpourri,
+# etc). NYCTaper is deliberately excluded here: unlike the others, it identifies one
+# specific taper, so it's worth surfacing as a "source" like "aadamjacobs" is.
+_GENERIC_COLLECTION_STEMS = [
+    c.lower() for c in TAPER_COLLECTIONS if c.lower() != "nyctaper"
+] + [
+    "audio_music",
+    "opensource_audio",
+    "community",
+]
+
+
+def _is_generic_collection(tag: str) -> bool:
+    t = tag.lower()
+    return t.startswith("fav-") or any(t == stem or t.startswith(f"{stem}_") for stem in _GENERIC_COLLECTION_STEMS)
+
+
+def extract_sources(collection: list[str] | str | None) -> list[str]:
+    """Pull out the specific taper/uploader collection tag(s) (e.g. "aadamjacobs",
+    "NYCTaper") from a raw collection value, filtering out generic scoping
+    collections and favorites-list noise (fav-*).
+
+    Accepts either the raw archive.org doc value (list or single string) or a
+    comma-joined string (how Concert.collection is stored in the DB).
+    """
+    if isinstance(collection, list):
+        parts = [str(c).strip() for c in collection if str(c).strip()]
+    elif isinstance(collection, str) and collection.strip():
+        parts = [p.strip() for p in collection.split(",") if p.strip()]
+    else:
+        parts = []
+    return [p for p in parts if not _is_generic_collection(p)]
+
+
+def source_string(collection: list[str] | str | None) -> str | None:
+    """Display-ready version of extract_sources(), or None if no distinct source."""
+    sources = extract_sources(collection)
+    return ", ".join(sources) if sources else None
+
 
 def search(
     query: str, rows: int, page: int = 1, sort: str = "addeddate desc"
