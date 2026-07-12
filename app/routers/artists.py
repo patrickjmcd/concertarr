@@ -26,7 +26,9 @@ def list_artists(request: Request, db: Session = Depends(get_db)):
 @router.get("/new")
 def new_artist_form(request: Request):
     return templates.TemplateResponse(
-        request, "artist_new.html", {"name": "", "query": "", "results": None}
+        request,
+        "artist_new.html",
+        {"name": "", "query": "", "results": None, "auto_download": True},
     )
 
 
@@ -35,6 +37,7 @@ def preview_artist(
     request: Request,
     name: str = Form(...),
     query: str = Form(""),
+    auto_download: bool = Form(False),
 ):
     effective_query = query.strip() or DEFAULT_QUERY_TEMPLATE.format(name=name)
     try:
@@ -46,7 +49,13 @@ def preview_artist(
     return templates.TemplateResponse(
         request,
         "artist_new.html",
-        {"name": name, "query": effective_query, "results": results, "error": error},
+        {
+            "name": name,
+            "query": effective_query,
+            "results": results,
+            "error": error,
+            "auto_download": auto_download,
+        },
     )
 
 
@@ -54,10 +63,13 @@ def preview_artist(
 def create_artist(
     name: str = Form(...),
     query: str = Form(""),
+    auto_download: bool = Form(False),
     db: Session = Depends(get_db),
 ):
     effective_query = query.strip() or DEFAULT_QUERY_TEMPLATE.format(name=name)
-    artist = Artist(name=name.strip(), query=effective_query, enabled=True)
+    artist = Artist(
+        name=name.strip(), query=effective_query, enabled=True, auto_download=auto_download
+    )
     db.add(artist)
     db.commit()
     db.refresh(artist)
@@ -82,6 +94,15 @@ def toggle_artist(artist_id: int, db: Session = Depends(get_db)):
     artist = db.get(Artist, artist_id)
     if artist:
         artist.enabled = not artist.enabled
+        db.commit()
+    return RedirectResponse(url=f"/artists/{artist_id}", status_code=303)
+
+
+@router.post("/{artist_id}/toggle-auto-download")
+def toggle_auto_download(artist_id: int, db: Session = Depends(get_db)):
+    artist = db.get(Artist, artist_id)
+    if artist:
+        artist.auto_download = not artist.auto_download
         db.commit()
     return RedirectResponse(url=f"/artists/{artist_id}", status_code=303)
 

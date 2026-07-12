@@ -8,13 +8,14 @@
 
   {% if artists %}
     <table class="table">
-      <thead><tr><th>Name</th><th>Query</th><th>Enabled</th><th>Last Checked</th></tr></thead>
+      <thead><tr><th>Name</th><th>Query</th><th>Enabled</th><th>Auto-download</th><th>Last Checked</th></tr></thead>
       <tbody>
       {% for a in artists %}
         <tr>
           <td><a href="/artists/{{ a.id }}">{{ a.name }}</a></td>
           <td class="mono small">{{ a.query }}</td>
           <td>{{ "Yes" if a.enabled else "No" }}</td>
+          <td>{{ "Yes" if a.auto_download else "No" }}</td>
           <td>{{ a.last_checked_at.strftime("%Y-%m-%d %H:%M UTC") if a.last_checked_at else "never" }}</td>
         </tr>
       {% endfor %}

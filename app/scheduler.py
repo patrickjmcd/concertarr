@@ -99,14 +99,48 @@ def poll_artist(artist_id: int) -> int:
             new_count += 1
 
         artist.last_checked_at = datetime.now(timezone.utc)
+        auto_download = artist.auto_download
         db.commit()
 
-        for concert_id in new_ids:
-            queue_download(concert_id)
+        if auto_download:
+            for concert_id in new_ids:
+                queue_download(concert_id)
 
         return new_count
     finally:
         db.close()
+
+
+def download_all_new(artist_id: int | None = None) -> int:
+    """Queue every concert currently in 'new' status. Optionally scoped to one artist."""
+    db = SessionLocal()
+    try:
+        query = db.query(Concert).filter(Concert.status == "new")
+        if artist_id is not None:
+            query = query.filter(Concert.artist_id == artist_id)
+        concert_ids = [c.id for c in query.all()]
+    finally:
+        db.close()
+    for concert_id in concert_ids:
+        queue_download(concert_id)
+    return len(concert_ids)
+
+
+def download_selected(concert_ids: list[int]) -> int:
+    """Queue a specific set of concerts, skipping any not currently in 'new' status."""
+    db = SessionLocal()
+    try:
+        valid_ids = [
+            c.id
+            for c in db.query(Concert)
+            .filter(Concert.id.in_(concert_ids), Concert.status == "new")
+            .all()
+        ]
+    finally:
+        db.close()
+    for concert_id in valid_ids:
+        queue_download(concert_id)
+    return len(valid_ids)
 
 
 def poll_all_artists() -> None:

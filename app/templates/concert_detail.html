@@ -3,7 +3,9 @@
 {% block content %}
   <div class="page-header">
     <h1>{{ concert.title }}</h1>
-    {% if concert.status == "failed" %}
+    {% if concert.status == "new" %}
+      <form method="post" action="/concerts/{{ concert.id }}/download" class="inline"><button class="button primary">Download Now</button></form>
+    {% elif concert.status == "failed" %}
       <form method="post" action="/concerts/{{ concert.id }}/retry" class="inline"><button class="button">Retry Download</button></form>
     {% endif %}
   </div>

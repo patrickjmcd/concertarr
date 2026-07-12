@@ -1,6 +1,6 @@
 import os
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 from app.config import settings
@@ -33,3 +33,16 @@ def init_db():
     from app import models  # noqa: F401
 
     Base.metadata.create_all(bind=engine)
+    _add_missing_columns()
+
+
+def _add_missing_columns():
+    inspector = inspect(engine)
+    if "artists" not in inspector.get_table_names():
+        return
+    existing_cols = {c["name"] for c in inspector.get_columns("artists")}
+    if "auto_download" not in existing_cols:
+        with engine.begin() as conn:
+            conn.execute(
+                text("ALTER TABLE artists ADD COLUMN auto_download BOOLEAN NOT NULL DEFAULT 1")
+            )

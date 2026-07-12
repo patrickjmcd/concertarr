@@ -17,6 +17,7 @@ class Artist(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     query: Mapped[str] = mapped_column(Text, nullable=False)
     enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    auto_download: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, nullable=False)
     last_checked_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 

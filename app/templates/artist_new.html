@@ -10,6 +10,10 @@
     <label>Archive.org query (optional override)
       <input type="text" name="query" value="{{ query }}" placeholder='creator:("Name") AND mediatype:(audio)'>
     </label>
+    <label class="checkbox-label">
+      <input type="checkbox" name="auto_download" {% if auto_download %}checked{% endif %}>
+      Auto-download newly discovered shows
+    </label>
     <button type="submit" class="button">Preview Matches</button>
   </form>
 
@@ -39,6 +43,7 @@
     <form method="post" action="/artists" class="form">
       <input type="hidden" name="name" value="{{ name }}">
       <input type="hidden" name="query" value="{{ query }}">
+      {% if auto_download %}<input type="hidden" name="auto_download" value="true">{% endif %}
       <button type="submit" class="button primary">Save & Monitor This Artist</button>
     </form>
   {% endif %}
