@@ -14,7 +14,7 @@ log = logging.getLogger("concertarr.artists")
 
 router = APIRouter(prefix="/artists")
 
-DEFAULT_QUERY_TEMPLATE = 'collection:(etree) AND creator:("{name}")'
+DEFAULT_QUERY_TEMPLATE = 'creator:("{name}") AND mediatype:(audio)'
 
 
 @router.get("")

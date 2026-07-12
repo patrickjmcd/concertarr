@@ -1,12 +1,12 @@
 # concertarr
 
-A Lidarr-style monitoring and auto-grab service for live concert recordings hosted on [archive.org](https://archive.org) (primarily the [Live Music Archive / etree](https://archive.org/details/etree) collection).
+A Lidarr-style monitoring and auto-grab service for live concert recordings hosted on [archive.org](https://archive.org). Live recordings are scattered across many collections beyond the [Live Music Archive / etree](https://archive.org/details/etree) collection (taper-specific collections, `taperssection`, `hifidelity`, `folksoundomy`, `opensource_audio`, etc.), so concertarr searches by artist and audio media type rather than restricting to a single collection.
 
 Add a band, and concertarr periodically polls archive.org for newly added recordings matching that artist, then automatically downloads the highest-priority available audio format.
 
 ## Features
 
-- Monitor artists via an archive.org advanced-search query (defaults to `collection:(etree) AND creator:("<name>")`, editable per artist)
+- Monitor artists via an archive.org advanced-search query (defaults to `creator:("<name>") AND mediatype:(audio)`, editable per artist)
 - Background poller (configurable interval) discovers newly added matching items
 - Automatic download with configurable format preference (e.g. `Flac,VBR MP3,MP3`)
 - Simple web UI: dashboard, artist list/detail, concert library, manual "check now" / "retry"
