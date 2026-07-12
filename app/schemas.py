@@ -86,6 +86,9 @@ class OkOut(BaseModel):
 
 class TrackItem(BaseModel):
     name: str
+    title: str | None = None
+    track_number: str | None = None
+    length: str | None = None
     size_bytes: int | None = None
 
 

@@ -46,33 +46,51 @@ def concert_detail(concert_id: int, db: Session = Depends(get_db)):
     )
 
 
+def _track_sort_key(f: dict) -> tuple[int, str]:
+    """Sort by the archive.org 'track' field (e.g. '01', '3/12') when present."""
+    track = str(f.get("track") or "").split("/")[0]
+    digits = "".join(ch for ch in track if ch.isdigit())
+    return (int(digits) if digits else 9999, f.get("name", ""))
+
+
 @router.get("/{concert_id}/tracks", response_model=TrackListOut)
 def concert_tracks(concert_id: int, db: Session = Depends(get_db)):
     concert = db.get(Concert, concert_id)
     if concert is None:
         raise HTTPException(status_code=404, detail="Concert not found")
 
-    if concert.status == "downloaded" and concert.download_path and os.path.isdir(concert.download_path):
-        tracks = []
-        for name in sorted(os.listdir(concert.download_path)):
-            path = os.path.join(concert.download_path, name)
-            if os.path.isfile(path):
-                tracks.append(TrackItem(name=name, size_bytes=os.path.getsize(path)))
-        return TrackListOut(source="disk", format=concert.format_used, tracks=tracks)
-
     try:
         fmt, files = downloader.preview_tracks(concert.identifier)
     except Exception as exc:  # noqa: BLE001
-        log.warning("Track preview failed for %s: %s", concert.identifier, exc)
+        log.warning("Track metadata fetch failed for %s: %s", concert.identifier, exc)
         return TrackListOut(source="preview", tracks=[], error=str(exc))
 
     if fmt is None:
         return TrackListOut(source="preview", tracks=[], error="No matching audio format found")
 
+    on_disk = bool(
+        concert.status == "downloaded"
+        and concert.download_path
+        and os.path.isdir(concert.download_path)
+    )
+    disk_sizes = {}
+    if on_disk:
+        for name in os.listdir(concert.download_path):
+            path = os.path.join(concert.download_path, name)
+            if os.path.isfile(path):
+                disk_sizes[name] = os.path.getsize(path)
+
     tracks = [
-        TrackItem(name=f["name"], size_bytes=int(f["size"]) if f.get("size") else None) for f in files
+        TrackItem(
+            name=f["name"],
+            title=f.get("title"),
+            track_number=f.get("track"),
+            length=f.get("length"),
+            size_bytes=disk_sizes.get(f["name"], int(f["size"]) if f.get("size") else None),
+        )
+        for f in sorted(files, key=_track_sort_key)
     ]
-    return TrackListOut(source="preview", format=fmt, tracks=sorted(tracks, key=lambda t: t.name))
+    return TrackListOut(source="disk" if on_disk else "preview", format=fmt, tracks=tracks)
 
 
 @router.post("/{concert_id}/retry", response_model=ConcertOut)

@@ -133,15 +133,21 @@ export function ConcertDetail() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Track</TableHead>
+                      <TableHead className="w-10">#</TableHead>
+                      <TableHead>Title</TableHead>
+                      <TableHead className="text-right">Length</TableHead>
                       <TableHead className="text-right">Size</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {tracks.tracks.map((t) => (
                       <TableRow key={t.name}>
-                        <TableCell className="font-mono text-xs">{t.name}</TableCell>
-                        <TableCell className="text-right text-muted-foreground">
+                        <TableCell className="text-muted-foreground">{t.track_number ?? "-"}</TableCell>
+                        <TableCell title={t.name}>{t.title ?? t.name}</TableCell>
+                        <TableCell className="text-right whitespace-nowrap text-muted-foreground">
+                          {t.length ?? "-"}
+                        </TableCell>
+                        <TableCell className="text-right whitespace-nowrap text-muted-foreground">
                           {formatBytes(t.size_bytes)}
                         </TableCell>
                       </TableRow>

@@ -58,6 +58,9 @@ export interface PreviewResult {
 
 export interface TrackItem {
   name: string
+  title: string | null
+  track_number: string | null
+  length: string | null
   size_bytes: number | null
 }
 
