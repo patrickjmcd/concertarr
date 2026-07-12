@@ -12,6 +12,21 @@ DOWNLOAD_URL = "https://archive.org/download/{identifier}/{filename}"
 
 SEARCH_FIELDS = ["identifier", "title", "date", "creator", "collection", "venue"]
 
+# Collections used by the archive.org live-recording taping community. Restricting
+# discovery/browse queries to these (rather than the much broader mediatype:(audio))
+# keeps results to actual concert tapes instead of podcasts, audiobooks, and other
+# unrelated audio uploads.
+TAPER_COLLECTIONS = [
+    "etree",
+    "taperssection",
+    "hifidelity",
+    "folksoundomy",
+    "roiocollection",
+    "cratediggers",
+    "NYCTaper",
+]
+TAPER_COLLECTIONS_QUERY = "(" + " OR ".join(f"collection:({c})" for c in TAPER_COLLECTIONS) + ")"
+
 
 def search_items(query: str, rows: int | None = None, sort: str = "addeddate desc") -> list[dict]:
     """Query archive.org's advancedsearch API and return raw item dicts."""

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Badge } from "@/components/ui/badge"
 import { StatusBadge } from "@/components/status-badge"
 import { formatDateTime } from "@/lib/format"
 import { api, type DashboardData } from "@/lib/api"
@@ -111,6 +112,67 @@ export function Dashboard() {
                       <TableCell className="text-muted-foreground">{c.show_date ?? "-"}</TableCell>
                       <TableCell>
                         <StatusBadge status={c.status} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
+      </section>
+
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-medium">Recently Added on Archive.org</h2>
+          <Link to="/discover" className="text-sm underline-offset-4 hover:underline">
+            Browse artists
+          </Link>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Newest additions to the Live Music Archive, regardless of whether you're monitoring the artist.
+        </p>
+        {data.recent_global.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nothing to show right now.</p>
+        ) : (
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Artist</TableHead>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {data.recent_global.map((item) => (
+                    <TableRow key={item.identifier}>
+                      <TableCell className="whitespace-nowrap">{item.creator ?? "-"}</TableCell>
+                      <TableCell className="max-w-sm">
+                        <a
+                          href={`https://archive.org/details/${item.identifier}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block truncate underline-offset-4 hover:underline"
+                          title={item.title}
+                        >
+                          {item.title}
+                        </a>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{item.date ?? "-"}</TableCell>
+                      <TableCell>
+                        {item.monitored ? (
+                          <Badge variant="outline">Monitored</Badge>
+                        ) : item.creator ? (
+                          <Link
+                            to={`/artists/new?name=${encodeURIComponent(item.creator)}`}
+                            className="text-sm underline-offset-4 hover:underline"
+                          >
+                            Monitor
+                          </Link>
+                        ) : null}
                       </TableCell>
                     </TableRow>
                   ))}

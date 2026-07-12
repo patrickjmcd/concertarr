@@ -2,19 +2,25 @@ import { useEffect, useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Card, CardContent } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { StatusBadge } from "@/components/status-badge"
-import { formatDateTime } from "@/lib/format"
-import { api, type ConcertWithArtist } from "@/lib/api"
+import { formatBytes, formatDateTime } from "@/lib/format"
+import { api, type ConcertWithArtist, type TrackListResult } from "@/lib/api"
 import { toast } from "sonner"
 
 export function ConcertDetail() {
   const { id } = useParams()
   const concertId = Number(id)
   const [concert, setConcert] = useState<ConcertWithArtist | null>(null)
+  const [tracks, setTracks] = useState<TrackListResult | null>(null)
   const [busy, setBusy] = useState(false)
 
   async function load() {
-    setConcert(await api.getConcert(concertId))
+    const detail = await api.getConcert(concertId)
+    setConcert(detail)
+    setTracks(null)
+    api.getConcertTracks(concertId).then(setTracks)
   }
 
   useEffect(() => {
@@ -104,6 +110,49 @@ export function ConcertDetail() {
         <Row label="Discovered">{formatDateTime(concert.discovered_at)}</Row>
         {concert.downloaded_at && <Row label="Downloaded">{formatDateTime(concert.downloaded_at)}</Row>}
       </dl>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-medium">
+          Tracks{tracks?.format ? ` (${tracks.format})` : ""}
+        </h2>
+        {!tracks ? (
+          <Skeleton className="h-40 w-full" />
+        ) : tracks.error ? (
+          <p className="text-sm text-muted-foreground">Couldn't load tracks: {tracks.error}</p>
+        ) : tracks.tracks.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No tracks found.</p>
+        ) : (
+          <>
+            {tracks.source === "preview" && (
+              <p className="text-xs text-muted-foreground">
+                Preview of what would be downloaded (not yet fetched).
+              </p>
+            )}
+            <Card>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Track</TableHead>
+                      <TableHead className="text-right">Size</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {tracks.tracks.map((t) => (
+                      <TableRow key={t.name}>
+                        <TableCell className="font-mono text-xs">{t.name}</TableCell>
+                        <TableCell className="text-right text-muted-foreground">
+                          {formatBytes(t.size_bytes)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </>
+        )}
+      </section>
     </div>
   )
 }

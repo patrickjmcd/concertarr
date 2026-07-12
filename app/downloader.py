@@ -53,6 +53,19 @@ def download_files(identifier: str, files: list[dict], dest_dir: str) -> None:
                         fh.write(chunk)
 
 
+def preview_tracks(identifier: str) -> tuple[str | None, list[dict]]:
+    """Fetch metadata and return the (format, files) that would be downloaded.
+
+    Returns (None, []) if no preferred format matches -- does not raise.
+    """
+    metadata = archive_client.get_metadata(identifier)
+    files = metadata.get("files", [])
+    try:
+        return choose_files(files)
+    except NoMatchingFormatError:
+        return None, []
+
+
 def download_concert(artist_name: str, identifier: str, show_date: str | None) -> tuple[str, str]:
     """Fetch metadata, pick the preferred format, download all matching files.
 

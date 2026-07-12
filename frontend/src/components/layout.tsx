@@ -5,6 +5,7 @@ const navItems = [
   { to: "/dashboard", label: "Dashboard" },
   { to: "/artists", label: "Artists" },
   { to: "/concerts", label: "Library" },
+  { to: "/discover", label: "Discover" },
 ]
 
 export function Layout() {

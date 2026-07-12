@@ -28,11 +28,20 @@ export interface ConcertWithArtist extends Concert {
   artist_name: string
 }
 
+export interface GlobalRecentItem {
+  identifier: string
+  title: string
+  date: string | null
+  creator: string | null
+  monitored: boolean
+}
+
 export interface DashboardData {
   artist_count: number
   status_counts: Record<string, number>
   recent_concerts: ConcertWithArtist[]
   artists: Artist[]
+  recent_global: GlobalRecentItem[]
 }
 
 export interface SearchResultItem {
@@ -44,6 +53,32 @@ export interface SearchResultItem {
 export interface PreviewResult {
   query: string
   results: SearchResultItem[]
+  error: string | null
+}
+
+export interface TrackItem {
+  name: string
+  size_bytes: number | null
+}
+
+export interface TrackListResult {
+  source: "disk" | "preview"
+  format: string | null
+  tracks: TrackItem[]
+  error: string | null
+}
+
+export interface DiscoverArtistItem {
+  name: string
+  count: number
+  sample_identifier: string
+  sample_title: string
+  monitored: boolean
+}
+
+export interface DiscoverArtistsResult {
+  query: string
+  artists: DiscoverArtistItem[]
   error: string | null
 }
 
@@ -84,6 +119,7 @@ export const api = {
   getConcerts: (status?: string) =>
     request<ConcertWithArtist[]>(`/concerts${status ? `?status=${status}` : ""}`),
   getConcert: (id: number) => request<ConcertWithArtist>(`/concerts/${id}`),
+  getConcertTracks: (id: number) => request<TrackListResult>(`/concerts/${id}/tracks`),
   retryConcert: (id: number) => request<Concert>(`/concerts/${id}/retry`, { method: "POST" }),
   downloadOne: (id: number) => request<Concert>(`/concerts/${id}/download`, { method: "POST" }),
   downloadSelected: (concertIds: number[]) =>
@@ -96,4 +132,7 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ artist_id: artistId ?? null }),
     }),
+
+  discoverArtists: (q: string) =>
+    request<DiscoverArtistsResult>(`/discover/artists?q=${encodeURIComponent(q)}`),
 }

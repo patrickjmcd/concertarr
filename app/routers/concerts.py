@@ -1,11 +1,17 @@
+import logging
+import os
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from app import downloader
 from app.db import get_db
 from app.models import Concert
 from app.scheduler import download_all_new, download_selected, queue_download
-from app.schemas import ConcertOut, ConcertWithArtistOut, CountOut
+from app.schemas import ConcertOut, ConcertWithArtistOut, CountOut, TrackItem, TrackListOut
+
+log = logging.getLogger("concertarr.concerts")
 
 router = APIRouter(prefix="/api/concerts")
 
@@ -38,6 +44,35 @@ def concert_detail(concert_id: int, db: Session = Depends(get_db)):
     return ConcertWithArtistOut(
         **ConcertOut.model_validate(concert).model_dump(), artist_name=concert.artist.name
     )
+
+
+@router.get("/{concert_id}/tracks", response_model=TrackListOut)
+def concert_tracks(concert_id: int, db: Session = Depends(get_db)):
+    concert = db.get(Concert, concert_id)
+    if concert is None:
+        raise HTTPException(status_code=404, detail="Concert not found")
+
+    if concert.status == "downloaded" and concert.download_path and os.path.isdir(concert.download_path):
+        tracks = []
+        for name in sorted(os.listdir(concert.download_path)):
+            path = os.path.join(concert.download_path, name)
+            if os.path.isfile(path):
+                tracks.append(TrackItem(name=name, size_bytes=os.path.getsize(path)))
+        return TrackListOut(source="disk", format=concert.format_used, tracks=tracks)
+
+    try:
+        fmt, files = downloader.preview_tracks(concert.identifier)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("Track preview failed for %s: %s", concert.identifier, exc)
+        return TrackListOut(source="preview", tracks=[], error=str(exc))
+
+    if fmt is None:
+        return TrackListOut(source="preview", tracks=[], error="No matching audio format found")
+
+    tracks = [
+        TrackItem(name=f["name"], size_bytes=int(f["size"]) if f.get("size") else None) for f in files
+    ]
+    return TrackListOut(source="preview", format=fmt, tracks=sorted(tracks, key=lambda t: t.name))
 
 
 @router.post("/{concert_id}/retry", response_model=ConcertOut)

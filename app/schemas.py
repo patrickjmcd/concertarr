@@ -42,11 +42,20 @@ class ArtistDetailOut(BaseModel):
     concerts: list[ConcertOut]
 
 
+class GlobalRecentItem(BaseModel):
+    identifier: str
+    title: str
+    date: str | None = None
+    creator: str | None = None
+    monitored: bool = False
+
+
 class DashboardOut(BaseModel):
     artist_count: int
     status_counts: dict[str, int]
     recent_concerts: list[ConcertWithArtistOut]
     artists: list[ArtistOut]
+    recent_global: list[GlobalRecentItem]
 
 
 class SearchResultItem(BaseModel):
@@ -73,3 +82,29 @@ class CountOut(BaseModel):
 
 class OkOut(BaseModel):
     ok: bool = True
+
+
+class TrackItem(BaseModel):
+    name: str
+    size_bytes: int | None = None
+
+
+class TrackListOut(BaseModel):
+    source: str  # "disk" | "preview"
+    format: str | None = None
+    tracks: list[TrackItem]
+    error: str | None = None
+
+
+class DiscoverArtistItem(BaseModel):
+    name: str
+    count: int
+    sample_identifier: str
+    sample_title: str
+    monitored: bool = False
+
+
+class DiscoverArtistsOut(BaseModel):
+    query: str
+    artists: list[DiscoverArtistItem]
+    error: str | None = None

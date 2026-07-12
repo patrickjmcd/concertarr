@@ -7,6 +7,7 @@ import { ArtistNew } from "@/pages/artist-new"
 import { ArtistDetail } from "@/pages/artist-detail"
 import { Concerts } from "@/pages/concerts"
 import { ConcertDetail } from "@/pages/concert-detail"
+import { Discover } from "@/pages/discover"
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
           <Route path="/artists/:id" element={<ArtistDetail />} />
           <Route path="/concerts" element={<Concerts />} />
           <Route path="/concerts/:id" element={<ConcertDetail />} />
+          <Route path="/discover" element={<Discover />} />
         </Route>
       </Routes>
       <Toaster />

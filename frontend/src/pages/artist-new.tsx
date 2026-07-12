@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useEffect, useState } from "react"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -11,7 +11,10 @@ import { toast } from "sonner"
 
 export function ArtistNew() {
   const navigate = useNavigate()
-  const [name, setName] = useState("")
+  const [searchParams] = useSearchParams()
+  const prefillName = searchParams.get("name") ?? ""
+
+  const [name, setName] = useState(prefillName)
   const [query, setQuery] = useState("")
   const [autoDownload, setAutoDownload] = useState(true)
   const [results, setResults] = useState<SearchResultItem[] | null>(null)
@@ -20,12 +23,11 @@ export function ArtistNew() {
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  async function handlePreview(e: React.FormEvent) {
-    e.preventDefault()
+  async function runPreview(nameValue: string, queryValue: string, autoDownloadValue: boolean) {
     setLoading(true)
     setError(null)
     try {
-      const preview = await api.previewArtist(name, query, autoDownload)
+      const preview = await api.previewArtist(nameValue, queryValue, autoDownloadValue)
       setResults(preview.results)
       setEffectiveQuery(preview.query)
       setError(preview.error)
@@ -35,6 +37,18 @@ export function ArtistNew() {
     } finally {
       setLoading(false)
     }
+  }
+
+  useEffect(() => {
+    if (prefillName) {
+      runPreview(prefillName, "", true)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefillName])
+
+  async function handlePreview(e: React.FormEvent) {
+    e.preventDefault()
+    await runPreview(name, query, autoDownload)
   }
 
   async function handleSave() {
