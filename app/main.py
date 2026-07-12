@@ -1,8 +1,9 @@
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
-from fastapi.responses import RedirectResponse
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
@@ -11,6 +12,8 @@ from app.routers import artists, concerts, dashboard
 from app.scheduler import shutdown_scheduler, start_scheduler
 
 logging.basicConfig(level=settings.log_level)
+
+FRONTEND_DIR = Path(__file__).resolve().parent.parent / "static_frontend"
 
 
 @asynccontextmanager
@@ -22,7 +25,6 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="concertarr", lifespan=lifespan)
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 app.include_router(dashboard.router)
 app.include_router(artists.router)
@@ -34,6 +36,12 @@ def healthz():
     return {"status": "ok"}
 
 
-@app.get("/")
-def root():
-    return RedirectResponse(url="/dashboard")
+if FRONTEND_DIR.is_dir():
+    app.mount("/assets", StaticFiles(directory=FRONTEND_DIR / "assets"), name="frontend-assets")
+
+    @app.get("/{full_path:path}")
+    def serve_spa(full_path: str):
+        candidate = FRONTEND_DIR / full_path
+        if full_path and candidate.is_file():
+            return FileResponse(candidate)
+        return FileResponse(FRONTEND_DIR / "index.html")

@@ -8,9 +8,14 @@ Add a band, and concertarr periodically polls archive.org for newly added record
 
 - Monitor artists via an archive.org advanced-search query (defaults to `creator:("<name>") AND mediatype:(audio)`, editable per artist)
 - Background poller (configurable interval) discovers newly added matching items
+- Per-artist auto-download toggle, plus manual checkbox selection and "download all new" for artists in manual mode
 - Automatic download with configurable format preference (e.g. `Flac,VBR MP3,MP3`)
-- Simple web UI: dashboard, artist list/detail, concert library, manual "check now" / "retry"
+- React + shadcn/ui frontend (dashboard, artist list/detail, concert library, manual "check now" / "retry" / "download now") talking to a FastAPI JSON API
 - SQLite storage (no external DB dependency)
+
+## Architecture
+
+FastAPI serves a JSON API under `/api/*` and the built React SPA (everything else, with client-side routing handled via a catch-all fallback to `index.html`). Both live in one container/process — there's no separate frontend deployment.
 
 ## Configuration
 
@@ -27,9 +32,27 @@ All settings are environment variables prefixed `CONCERTARR_`:
 
 ## Running locally
 
+Backend:
+
 ```bash
 pip install -r requirements.txt
 uvicorn app.main:app --reload
+```
+
+Frontend (dev server proxies `/api` to the backend on `:8000`):
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+For a production-style run, build the frontend and let FastAPI serve it directly:
+
+```bash
+cd frontend && npm install && npm run build && cd ..
+cp -r frontend/dist static_frontend
+uvicorn app.main:app
 ```
 
 ## Docker

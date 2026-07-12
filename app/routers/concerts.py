@@ -1,73 +1,75 @@
-from fastapi import APIRouter, Depends, Form, Request
-from fastapi.responses import RedirectResponse
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.models import Concert
 from app.scheduler import download_all_new, download_selected, queue_download
-from app.templating import templates
+from app.schemas import ConcertOut, ConcertWithArtistOut, CountOut
 
-router = APIRouter(prefix="/concerts")
+router = APIRouter(prefix="/api/concerts")
 
 
-@router.get("")
-def list_concerts(request: Request, status: str | None = None, db: Session = Depends(get_db)):
+class DownloadSelectedRequest(BaseModel):
+    concert_ids: list[int] = []
+
+
+class DownloadAllRequest(BaseModel):
+    artist_id: int | None = None
+
+
+@router.get("", response_model=list[ConcertWithArtistOut])
+def list_concerts(status: str | None = None, db: Session = Depends(get_db)):
     query = db.query(Concert).order_by(Concert.discovered_at.desc())
     if status:
         query = query.filter(Concert.status == status)
     concerts = query.limit(200).all()
-    return templates.TemplateResponse(
-        request, "concerts.html", {"concerts": concerts, "status_filter": status}
+    return [
+        ConcertWithArtistOut(**ConcertOut.model_validate(c).model_dump(), artist_name=c.artist.name)
+        for c in concerts
+    ]
+
+
+@router.get("/{concert_id}", response_model=ConcertWithArtistOut)
+def concert_detail(concert_id: int, db: Session = Depends(get_db)):
+    concert = db.get(Concert, concert_id)
+    if concert is None:
+        raise HTTPException(status_code=404, detail="Concert not found")
+    return ConcertWithArtistOut(
+        **ConcertOut.model_validate(concert).model_dump(), artist_name=concert.artist.name
     )
 
 
-@router.get("/{concert_id}")
-def concert_detail(concert_id: int, request: Request, db: Session = Depends(get_db)):
-    concert = db.get(Concert, concert_id)
-    return templates.TemplateResponse(request, "concert_detail.html", {"concert": concert})
-
-
-@router.post("/{concert_id}/retry")
+@router.post("/{concert_id}/retry", response_model=ConcertOut)
 def retry_concert(concert_id: int, db: Session = Depends(get_db)):
     concert = db.get(Concert, concert_id)
-    if concert:
-        concert.status = "new"
-        concert.error = None
-        db.commit()
-        queue_download(concert_id)
-    return RedirectResponse(url=f"/concerts/{concert_id}", status_code=303)
+    if concert is None:
+        raise HTTPException(status_code=404, detail="Concert not found")
+    concert.status = "new"
+    concert.error = None
+    db.commit()
+    queue_download(concert_id)
+    db.refresh(concert)
+    return concert
 
 
-@router.post("/{concert_id}/download")
+@router.post("/{concert_id}/download", response_model=ConcertOut)
 def download_one(concert_id: int, db: Session = Depends(get_db)):
     concert = db.get(Concert, concert_id)
-    if concert and concert.status == "new":
+    if concert is None:
+        raise HTTPException(status_code=404, detail="Concert not found")
+    if concert.status == "new":
         queue_download(concert_id)
-    return RedirectResponse(url=f"/concerts/{concert_id}", status_code=303)
+    return concert
 
 
-def _redirect_target(artist_id: int | None, status_filter: str | None) -> str:
-    if artist_id is not None:
-        return f"/artists/{artist_id}"
-    if status_filter:
-        return f"/concerts?status={status_filter}"
-    return "/concerts"
+@router.post("/download-selected", response_model=CountOut)
+def download_selected_concerts(payload: DownloadSelectedRequest):
+    count = download_selected(payload.concert_ids)
+    return CountOut(count=count)
 
 
-@router.post("/download-selected")
-def download_selected_concerts(
-    concert_ids: list[int] = Form(default=[]),
-    artist_id: int | None = Form(default=None),
-    status_filter: str | None = Form(default=None),
-):
-    download_selected(concert_ids)
-    return RedirectResponse(url=_redirect_target(artist_id, status_filter), status_code=303)
-
-
-@router.post("/download-all-new")
-def download_all_new_concerts(
-    artist_id: int | None = Form(default=None),
-    status_filter: str | None = Form(default=None),
-):
-    download_all_new(artist_id=artist_id)
-    return RedirectResponse(url=_redirect_target(artist_id, status_filter), status_code=303)
+@router.post("/download-all-new", response_model=CountOut)
+def download_all_new_concerts(payload: DownloadAllRequest):
+    count = download_all_new(artist_id=payload.artist_id)
+    return CountOut(count=count)

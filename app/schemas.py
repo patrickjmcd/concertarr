@@ -1,0 +1,75 @@
+from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict
+
+
+class ArtistOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    query: str
+    enabled: bool
+    auto_download: bool
+    created_at: datetime
+    last_checked_at: datetime | None
+
+
+class ConcertOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    artist_id: int
+    identifier: str
+    title: str
+    show_date: str | None
+    venue: str | None
+    collection: str | None
+    status: str
+    download_path: str | None
+    format_used: str | None
+    error: str | None
+    discovered_at: datetime
+    downloaded_at: datetime | None
+
+
+class ConcertWithArtistOut(ConcertOut):
+    artist_name: str
+
+
+class ArtistDetailOut(BaseModel):
+    artist: ArtistOut
+    concerts: list[ConcertOut]
+
+
+class DashboardOut(BaseModel):
+    artist_count: int
+    status_counts: dict[str, int]
+    recent_concerts: list[ConcertWithArtistOut]
+    artists: list[ArtistOut]
+
+
+class SearchResultItem(BaseModel):
+    identifier: str
+    title: str
+    date: str | None = None
+
+
+class PreviewOut(BaseModel):
+    query: str
+    results: list[SearchResultItem]
+    error: str | None = None
+
+
+class ArtistCreate(BaseModel):
+    name: str
+    query: str = ""
+    auto_download: bool = True
+
+
+class CountOut(BaseModel):
+    count: int
+
+
+class OkOut(BaseModel):
+    ok: bool = True

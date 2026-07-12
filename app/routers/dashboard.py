@@ -1,16 +1,16 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.models import Artist, Concert
-from app.templating import templates
+from app.schemas import ArtistOut, ConcertWithArtistOut, DashboardOut
 
-router = APIRouter()
+router = APIRouter(prefix="/api/dashboard")
 
 
-@router.get("/dashboard")
-def dashboard(request: Request, db: Session = Depends(get_db)):
+@router.get("", response_model=DashboardOut)
+def dashboard(db: Session = Depends(get_db)):
     artist_count = db.query(func.count(Artist.id)).scalar()
     status_counts = dict(
         db.query(Concert.status, func.count(Concert.id)).group_by(Concert.status).all()
@@ -20,13 +20,12 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
     )
     artists = db.query(Artist).order_by(Artist.name).all()
 
-    return templates.TemplateResponse(
-        request,
-        "dashboard.html",
-        {
-            "artist_count": artist_count,
-            "status_counts": status_counts,
-            "recent_concerts": recent_concerts,
-            "artists": artists,
-        },
+    return DashboardOut(
+        artist_count=artist_count,
+        status_counts=status_counts,
+        recent_concerts=[
+            ConcertWithArtistOut(**ConcertOut.model_validate(c).model_dump(), artist_name=c.artist.name)
+            for c in recent_concerts
+        ],
+        artists=[ArtistOut.model_validate(a) for a in artists],
     )

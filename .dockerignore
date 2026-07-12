@@ -6,3 +6,6 @@ __pycache__
 data
 *.db
 .pytest_cache
+static_frontend
+frontend/node_modules
+frontend/dist

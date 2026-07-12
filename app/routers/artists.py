@@ -1,116 +1,114 @@
 import logging
 
-from fastapi import APIRouter, Depends, Form, Request
-from fastapi.responses import RedirectResponse
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app import archive_client
 from app.db import get_db
 from app.models import Artist
+from app.schemas import (
+    ArtistCreate,
+    ArtistDetailOut,
+    ArtistOut,
+    ConcertOut,
+    PreviewOut,
+    SearchResultItem,
+)
 from app.scheduler import poll_artist
-from app.templating import templates
 
 log = logging.getLogger("concertarr.artists")
 
-router = APIRouter(prefix="/artists")
+router = APIRouter(prefix="/api/artists")
 
 DEFAULT_QUERY_TEMPLATE = 'creator:("{name}") AND mediatype:(audio)'
 
 
-@router.get("")
-def list_artists(request: Request, db: Session = Depends(get_db)):
+@router.get("", response_model=list[ArtistOut])
+def list_artists(db: Session = Depends(get_db)):
     artists = db.query(Artist).order_by(Artist.name).all()
-    return templates.TemplateResponse(request, "artists.html", {"artists": artists})
+    return artists
 
 
-@router.get("/new")
-def new_artist_form(request: Request):
-    return templates.TemplateResponse(
-        request,
-        "artist_new.html",
-        {"name": "", "query": "", "results": None, "auto_download": True},
-    )
-
-
-@router.post("/preview")
-def preview_artist(
-    request: Request,
-    name: str = Form(...),
-    query: str = Form(""),
-    auto_download: bool = Form(False),
-):
-    effective_query = query.strip() or DEFAULT_QUERY_TEMPLATE.format(name=name)
+@router.post("/preview", response_model=PreviewOut)
+def preview_artist(payload: ArtistCreate):
+    effective_query = payload.query.strip() or DEFAULT_QUERY_TEMPLATE.format(name=payload.name)
     try:
-        results = archive_client.search_items(effective_query, rows=20)
+        docs = archive_client.search_items(effective_query, rows=20)
+        results = [
+            SearchResultItem(identifier=d.get("identifier", ""), title=d.get("title", ""), date=d.get("date"))
+            for d in docs
+        ]
         error = None
     except Exception as exc:  # noqa: BLE001
         results = []
         error = str(exc)
-    return templates.TemplateResponse(
-        request,
-        "artist_new.html",
-        {
-            "name": name,
-            "query": effective_query,
-            "results": results,
-            "error": error,
-            "auto_download": auto_download,
-        },
-    )
+    return PreviewOut(query=effective_query, results=results, error=error)
 
 
-@router.post("")
-def create_artist(
-    name: str = Form(...),
-    query: str = Form(""),
-    auto_download: bool = Form(False),
-    db: Session = Depends(get_db),
-):
-    effective_query = query.strip() or DEFAULT_QUERY_TEMPLATE.format(name=name)
+@router.post("", response_model=ArtistOut)
+def create_artist(payload: ArtistCreate, db: Session = Depends(get_db)):
+    effective_query = payload.query.strip() or DEFAULT_QUERY_TEMPLATE.format(name=payload.name)
     artist = Artist(
-        name=name.strip(), query=effective_query, enabled=True, auto_download=auto_download
+        name=payload.name.strip(),
+        query=effective_query,
+        enabled=True,
+        auto_download=payload.auto_download,
     )
     db.add(artist)
     db.commit()
     db.refresh(artist)
     poll_artist(artist.id)
-    return RedirectResponse(url=f"/artists/{artist.id}", status_code=303)
+    db.refresh(artist)
+    return artist
 
 
-@router.get("/{artist_id}")
-def artist_detail(artist_id: int, request: Request, db: Session = Depends(get_db)):
+@router.get("/{artist_id}", response_model=ArtistDetailOut)
+def artist_detail(artist_id: int, db: Session = Depends(get_db)):
     artist = db.get(Artist, artist_id)
-    return templates.TemplateResponse(request, "artist_detail.html", {"artist": artist})
+    if artist is None:
+        raise HTTPException(status_code=404, detail="Artist not found")
+    return ArtistDetailOut(
+        artist=ArtistOut.model_validate(artist),
+        concerts=[ConcertOut.model_validate(c) for c in artist.concerts],
+    )
 
 
-@router.post("/{artist_id}/check")
-def check_artist(artist_id: int):
+@router.post("/{artist_id}/check", response_model=ArtistOut)
+def check_artist(artist_id: int, db: Session = Depends(get_db)):
     poll_artist(artist_id)
-    return RedirectResponse(url=f"/artists/{artist_id}", status_code=303)
+    artist = db.get(Artist, artist_id)
+    if artist is None:
+        raise HTTPException(status_code=404, detail="Artist not found")
+    return artist
 
 
-@router.post("/{artist_id}/toggle")
+@router.post("/{artist_id}/toggle", response_model=ArtistOut)
 def toggle_artist(artist_id: int, db: Session = Depends(get_db)):
     artist = db.get(Artist, artist_id)
-    if artist:
-        artist.enabled = not artist.enabled
-        db.commit()
-    return RedirectResponse(url=f"/artists/{artist_id}", status_code=303)
+    if artist is None:
+        raise HTTPException(status_code=404, detail="Artist not found")
+    artist.enabled = not artist.enabled
+    db.commit()
+    db.refresh(artist)
+    return artist
 
 
-@router.post("/{artist_id}/toggle-auto-download")
+@router.post("/{artist_id}/toggle-auto-download", response_model=ArtistOut)
 def toggle_auto_download(artist_id: int, db: Session = Depends(get_db)):
     artist = db.get(Artist, artist_id)
-    if artist:
-        artist.auto_download = not artist.auto_download
-        db.commit()
-    return RedirectResponse(url=f"/artists/{artist_id}", status_code=303)
+    if artist is None:
+        raise HTTPException(status_code=404, detail="Artist not found")
+    artist.auto_download = not artist.auto_download
+    db.commit()
+    db.refresh(artist)
+    return artist
 
 
-@router.post("/{artist_id}/delete")
+@router.delete("/{artist_id}")
 def delete_artist(artist_id: int, db: Session = Depends(get_db)):
     artist = db.get(Artist, artist_id)
-    if artist:
-        db.delete(artist)
-        db.commit()
-    return RedirectResponse(url="/artists", status_code=303)
+    if artist is None:
+        raise HTTPException(status_code=404, detail="Artist not found")
+    db.delete(artist)
+    db.commit()
+    return {"ok": True}
