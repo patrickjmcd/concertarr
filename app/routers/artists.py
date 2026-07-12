@@ -30,11 +30,14 @@ def list_artists(db: Session = Depends(get_db)):
     return artists
 
 
+PREVIEW_ROWS = 100
+
+
 @router.post("/preview", response_model=PreviewOut)
 def preview_artist(payload: ArtistCreate):
     effective_query = payload.query.strip() or DEFAULT_QUERY_TEMPLATE.format(name=payload.name)
     try:
-        docs = archive_client.search_items(effective_query, rows=20)
+        docs, total_found = archive_client.search(effective_query, rows=PREVIEW_ROWS)
         results = [
             SearchResultItem(
                 identifier=d.get("identifier", ""),
@@ -47,8 +50,9 @@ def preview_artist(payload: ArtistCreate):
         error = None
     except Exception as exc:  # noqa: BLE001
         results = []
+        total_found = 0
         error = str(exc)
-    return PreviewOut(query=effective_query, results=results, error=error)
+    return PreviewOut(query=effective_query, results=results, total_found=total_found, error=error)
 
 
 @router.post("", response_model=ArtistOut)

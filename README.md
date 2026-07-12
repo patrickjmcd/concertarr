@@ -28,7 +28,8 @@ All settings are environment variables prefixed `CONCERTARR_`:
 | `CONCERTARR_POLL_INTERVAL_MINUTES` | `180` | How often to poll archive.org for each artist |
 | `CONCERTARR_PREFERRED_FORMATS` | `Flac,VBR MP3,MP3,Ogg Vorbis` | Priority-ordered list of archive.org file formats to download |
 | `CONCERTARR_MAX_CONCURRENT_DOWNLOADS` | `2` | Download worker pool size |
-| `CONCERTARR_SEARCH_ROWS` | `50` | Items fetched per poll (most recently added first) |
+| `CONCERTARR_SEARCH_ROWS` | `50` | Items fetched per routine poll (most recently added first) |
+| `CONCERTARR_MAX_BACKFILL_RESULTS` | `500` | Cap on how many shows to backfill (across paginated requests) the first time an artist is added |
 
 ## Running locally
 

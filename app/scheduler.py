@@ -59,15 +59,27 @@ def queue_download(concert_id: int) -> None:
 
 
 def poll_artist(artist_id: int) -> int:
-    """Search archive.org for new items matching one artist's query. Returns count of new concerts found."""
+    """Search archive.org for new items matching one artist's query. Returns count of new concerts found.
+
+    The first poll for an artist backfills their full back catalog (paginating
+    up to settings.max_backfill_results) rather than just the most-recently-added
+    page -- otherwise a prolific artist's older shows would never surface, since
+    every later poll only looks at what's newest.
+    """
     db = SessionLocal()
     try:
         artist = db.get(Artist, artist_id)
         if artist is None or not artist.enabled:
             return 0
 
+        is_first_poll = artist.last_checked_at is None
         try:
-            docs = archive_client.search_items(artist.query)
+            if is_first_poll:
+                docs = archive_client.search_items_paginated(
+                    artist.query, max_results=settings.max_backfill_results
+                )
+            else:
+                docs = archive_client.search_items(artist.query)
         except Exception:  # noqa: BLE001
             log.exception("Search failed for artist %s (%s)", artist.name, artist.query)
             return 0

@@ -70,6 +70,7 @@ class SearchResultItem(BaseModel):
 class PreviewOut(BaseModel):
     query: str
     results: list[SearchResultItem]
+    total_found: int = 0
     error: str | None = None
 
 

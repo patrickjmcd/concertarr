@@ -56,6 +56,7 @@ export interface SearchResultItem {
 export interface PreviewResult {
   query: string
   results: SearchResultItem[]
+  total_found: number
   error: string | null
 }
 

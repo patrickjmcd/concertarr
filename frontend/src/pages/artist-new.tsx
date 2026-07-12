@@ -19,6 +19,7 @@ export function ArtistNew() {
   const [query, setQuery] = useState("")
   const [autoDownload, setAutoDownload] = useState(true)
   const [results, setResults] = useState<SearchResultItem[] | null>(null)
+  const [totalFound, setTotalFound] = useState(0)
   const [effectiveQuery, setEffectiveQuery] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -30,6 +31,7 @@ export function ArtistNew() {
     try {
       const preview = await api.previewArtist(nameValue, queryValue, autoDownloadValue)
       setResults(preview.results)
+      setTotalFound(preview.total_found)
       setEffectiveQuery(preview.query)
       setError(preview.error)
     } catch (err) {
@@ -101,7 +103,18 @@ export function ArtistNew() {
 
       {results !== null && (
         <div className="space-y-4">
-          <h2 className="text-lg font-medium">{results.length} match(es)</h2>
+          <div>
+            <h2 className="text-lg font-medium">
+              {totalFound > results.length
+                ? `Showing ${results.length} of ${totalFound} matches`
+                : `${results.length} match(es)`}
+            </h2>
+            {totalFound > results.length && (
+              <p className="text-xs text-muted-foreground">
+                Saving will backfill the full back catalog (up to 500 shows), not just what's shown here.
+              </p>
+            )}
+          </div>
           {results.length > 0 ? (
             <Card>
               <CardContent className="p-0">

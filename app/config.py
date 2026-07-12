@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     preferred_formats: str = "Flac,VBR MP3,MP3,Ogg Vorbis"
     max_concurrent_downloads: int = 2
     search_rows: int = 50
+    max_backfill_results: int = 500
     http_timeout_seconds: int = 30
     log_level: str = "INFO"
 
