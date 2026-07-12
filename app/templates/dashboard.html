@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - concertarr{% endblock %}
+{% block content %}
+  <h1>Dashboard</h1>
+
+  <div class="stat-row">
+    <div class="stat-tile"><span class="stat-value">{{ artist_count }}</span><span class="stat-label">Monitored Artists</span></div>
+    {% for status in ["new", "downloading", "downloaded", "failed"] %}
+      <div class="stat-tile"><span class="stat-value">{{ status_counts.get(status, 0) }}</span><span class="stat-label">{{ status|capitalize }}</span></div>
+    {% endfor %}
+  </div>
+
+  <h2>Monitored Artists</h2>
+  {% if artists %}
+    <table class="table">
+      <thead><tr><th>Name</th><th>Enabled</th><th>Last Checked</th></tr></thead>
+      <tbody>
+      {% for a in artists %}
+        <tr>
+          <td><a href="/artists/{{ a.id }}">{{ a.name }}</a></td>
+          <td>{{ "Yes" if a.enabled else "No" }}</td>
+          <td>{{ a.last_checked_at.strftime("%Y-%m-%d %H:%M UTC") if a.last_checked_at else "never" }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">No artists monitored yet. <a href="/artists/new">Add one</a>.</p>
+  {% endif %}
+
+  <h2>Recently Discovered</h2>
+  {% if recent_concerts %}
+    <table class="table">
+      <thead><tr><th>Artist</th><th>Title</th><th>Date</th><th>Status</th></tr></thead>
+      <tbody>
+      {% for c in recent_concerts %}
+        <tr>
+          <td>{{ c.artist.name }}</td>
+          <td><a href="/concerts/{{ c.id }}">{{ c.title }}</a></td>
+          <td>{{ c.show_date or "-" }}</td>
+          <td><span class="badge badge-{{ c.status }}">{{ c.status }}</span></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">Nothing discovered yet.</p>
+  {% endif %}
+{% endblock %}

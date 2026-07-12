@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Library - concertarr{% endblock %}
+{% block content %}
+  <h1>Library</h1>
+
+  <div class="filters">
+    <a href="/concerts" class="{{ 'active' if not status_filter }}">All</a>
+    {% for s in ["new", "downloading", "downloaded", "failed"] %}
+      <a href="/concerts?status={{ s }}" class="{{ 'active' if status_filter == s }}">{{ s|capitalize }}</a>
+    {% endfor %}
+  </div>
+
+  {% if concerts %}
+    <table class="table">
+      <thead><tr><th>Artist</th><th>Title</th><th>Date</th><th>Status</th></tr></thead>
+      <tbody>
+      {% for c in concerts %}
+        <tr>
+          <td>{{ c.artist.name }}</td>
+          <td><a href="/concerts/{{ c.id }}">{{ c.title }}</a></td>
+          <td>{{ c.show_date or "-" }}</td>
+          <td><span class="badge badge-{{ c.status }}">{{ c.status }}</span></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">No concerts found.</p>
+  {% endif %}
+{% endblock %}

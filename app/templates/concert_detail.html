@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}{{ concert.title }} - concertarr{% endblock %}
+{% block content %}
+  <div class="page-header">
+    <h1>{{ concert.title }}</h1>
+    {% if concert.status == "failed" %}
+      <form method="post" action="/concerts/{{ concert.id }}/retry" class="inline"><button class="button">Retry Download</button></form>
+    {% endif %}
+  </div>
+
+  <p>Artist: <a href="/artists/{{ concert.artist.id }}">{{ concert.artist.name }}</a></p>
+  <p>Status: <span class="badge badge-{{ concert.status }}">{{ concert.status }}</span></p>
+  <p>Date: {{ concert.show_date or "unknown" }}</p>
+  <p>Collection: {{ concert.collection or "-" }}</p>
+  <p>Identifier: <a href="https://archive.org/details/{{ concert.identifier }}" target="_blank" rel="noopener">{{ concert.identifier }}</a></p>
+  {% if concert.format_used %}<p>Format: {{ concert.format_used }}</p>{% endif %}
+  {% if concert.download_path %}<p>Path: <span class="mono small">{{ concert.download_path }}</span></p>{% endif %}
+  {% if concert.error %}<p class="error">Error: {{ concert.error }}</p>{% endif %}
+  <p>Discovered: {{ concert.discovered_at.strftime("%Y-%m-%d %H:%M UTC") }}</p>
+  {% if concert.downloaded_at %}<p>Downloaded: {{ concert.downloaded_at.strftime("%Y-%m-%d %H:%M UTC") }}</p>{% endif %}
+{% endblock %}

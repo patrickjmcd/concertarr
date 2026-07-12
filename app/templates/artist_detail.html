@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{{ artist.name }} - concertarr{% endblock %}
+{% block content %}
+  <div class="page-header">
+    <h1>{{ artist.name }}</h1>
+    <div class="actions">
+      <form method="post" action="/artists/{{ artist.id }}/check" class="inline"><button class="button">Check Now</button></form>
+      <form method="post" action="/artists/{{ artist.id }}/toggle" class="inline"><button class="button">{{ "Disable" if artist.enabled else "Enable" }}</button></form>
+      <form method="post" action="/artists/{{ artist.id }}/delete" class="inline" onsubmit="return confirm('Delete this artist and its history?');"><button class="button danger">Delete</button></form>
+    </div>
+  </div>
+
+  <p class="mono small">{{ artist.query }}</p>
+  <p>Last checked: {{ artist.last_checked_at.strftime("%Y-%m-%d %H:%M UTC") if artist.last_checked_at else "never" }}</p>
+
+  <h2>Concerts</h2>
+  {% if artist.concerts %}
+    <table class="table">
+      <thead><tr><th>Title</th><th>Date</th><th>Status</th></tr></thead>
+      <tbody>
+      {% for c in artist.concerts %}
+        <tr>
+          <td><a href="/concerts/{{ c.id }}">{{ c.title }}</a></td>
+          <td>{{ c.show_date or "-" }}</td>
+          <td><span class="badge badge-{{ c.status }}">{{ c.status }}</span></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">Nothing discovered yet for this artist.</p>
+  {% endif %}
+{% endblock %}
