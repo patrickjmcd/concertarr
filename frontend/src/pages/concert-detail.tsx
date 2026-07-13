@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { StatusBadge } from "@/components/status-badge"
 import { ConcertFlag } from "@/components/concert-flag"
 import { TrackPlayer } from "@/components/track-player"
-import { formatBytes, formatDateTime } from "@/lib/format"
+import { formatBytes, formatDateTime, formatTrackLength } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { api, type ConcertWithArtist, type TrackListResult } from "@/lib/api"
 import { toast } from "sonner"
@@ -170,7 +170,7 @@ export function ConcertDetail() {
                           {t.title ?? t.name}
                         </TableCell>
                         <TableCell className="text-right whitespace-nowrap text-muted-foreground">
-                          {t.length ?? "-"}
+                          {formatTrackLength(t.length)}
                         </TableCell>
                         <TableCell className="text-right whitespace-nowrap text-muted-foreground">
                           {formatBytes(t.size_bytes)}

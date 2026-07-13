@@ -17,6 +17,16 @@ export function formatDuration(seconds: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`
 }
 
+export function formatTrackLength(length: string | null): string {
+  if (!length) return "-"
+  // archive.org's file "length" is usually raw seconds (often with a
+  // fractional part, e.g. "245.32"), but is occasionally pre-formatted
+  // as "m:ss" already -- only convert the former.
+  if (length.includes(":")) return length
+  const seconds = Number(length)
+  return Number.isFinite(seconds) ? formatDuration(seconds) : length
+}
+
 export function formatBytes(bytes: number | null): string {
   if (bytes === null) return "-"
   const units = ["B", "KB", "MB", "GB"]
