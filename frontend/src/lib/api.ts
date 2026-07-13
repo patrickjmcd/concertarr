@@ -69,6 +69,7 @@ export interface TrackItem {
   track_number: string | null
   length: string | null
   size_bytes: number | null
+  stream_url: string | null
 }
 
 export interface TrackListResult {

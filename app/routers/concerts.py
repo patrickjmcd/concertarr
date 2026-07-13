@@ -2,10 +2,11 @@ import logging
 import os
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app import downloader
+from app import archive_client, downloader
 from app.db import get_db
 from app.models import Concert
 from app.scheduler import download_all_new, download_selected, queue_download
@@ -87,10 +88,30 @@ def concert_tracks(concert_id: int, db: Session = Depends(get_db)):
             track_number=f.get("track"),
             length=f.get("length"),
             size_bytes=disk_sizes.get(f["name"], int(f["size"]) if f.get("size") else None),
+            stream_url=(
+                f"/api/concerts/{concert_id}/tracks/{f['name']}/stream"
+                if f["name"] in disk_sizes
+                else archive_client.download_url(concert.identifier, f["name"])
+            ),
         )
         for f in sorted(files, key=_track_sort_key)
     ]
     return TrackListOut(source="disk" if on_disk else "preview", format=fmt, tracks=tracks)
+
+
+@router.get("/{concert_id}/tracks/{filename}/stream")
+def stream_track(concert_id: int, filename: str, db: Session = Depends(get_db)):
+    """Serve an already-downloaded track's audio file for in-app playback."""
+    concert = db.get(Concert, concert_id)
+    if concert is None:
+        raise HTTPException(status_code=404, detail="Concert not found")
+    if concert.status != "downloaded" or not concert.download_path:
+        raise HTTPException(status_code=404, detail="Track not available locally")
+
+    path = os.path.join(concert.download_path, os.path.basename(filename))
+    if not os.path.isfile(path):
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(path)
 
 
 @router.post("/{concert_id}/retry", response_model=ConcertOut)

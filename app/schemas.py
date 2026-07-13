@@ -97,6 +97,7 @@ class TrackItem(BaseModel):
     track_number: str | None = None
     length: str | None = None
     size_bytes: int | None = None
+    stream_url: str | None = None
 
 
 class TrackListOut(BaseModel):

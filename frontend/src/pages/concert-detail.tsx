@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react"
 import { Link, useParams } from "react-router-dom"
+import { Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { StatusBadge } from "@/components/status-badge"
 import { ConcertFlag } from "@/components/concert-flag"
+import { TrackPlayer } from "@/components/track-player"
 import { formatBytes, formatDateTime } from "@/lib/format"
+import { cn } from "@/lib/utils"
 import { api, type ConcertWithArtist, type TrackListResult } from "@/lib/api"
 import { toast } from "sonner"
 
@@ -16,11 +19,13 @@ export function ConcertDetail() {
   const [concert, setConcert] = useState<ConcertWithArtist | null>(null)
   const [tracks, setTracks] = useState<TrackListResult | null>(null)
   const [busy, setBusy] = useState(false)
+  const [playingIndex, setPlayingIndex] = useState<number | null>(null)
 
   async function load() {
     const detail = await api.getConcert(concertId)
     setConcert(detail)
     setTracks(null)
+    setPlayingIndex(null)
     api.getConcertTracks(concertId).then(setTracks)
   }
 
@@ -61,7 +66,7 @@ export function ConcertDetail() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className={cn("space-y-6", playingIndex !== null && "pb-20")}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="flex items-center text-2xl font-semibold tracking-tight">
           {concert.title}
@@ -137,6 +142,7 @@ export function ConcertDetail() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-8" />
                       <TableHead className="w-10">#</TableHead>
                       <TableHead>Title</TableHead>
                       <TableHead className="text-right">Length</TableHead>
@@ -144,10 +150,25 @@ export function ConcertDetail() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {tracks.tracks.map((t) => (
-                      <TableRow key={t.name}>
+                    {tracks.tracks.map((t, i) => (
+                      <TableRow key={t.name} className={cn(playingIndex === i && "bg-muted/50")}>
+                        <TableCell>
+                          <Button
+                            size="icon-xs"
+                            variant="ghost"
+                            disabled={!t.stream_url}
+                            onClick={() => setPlayingIndex(i)}
+                          >
+                            <Play />
+                          </Button>
+                        </TableCell>
                         <TableCell className="text-muted-foreground">{t.track_number ?? "-"}</TableCell>
-                        <TableCell title={t.name}>{t.title ?? t.name}</TableCell>
+                        <TableCell
+                          title={t.name}
+                          className={cn(playingIndex === i && "font-medium text-foreground")}
+                        >
+                          {t.title ?? t.name}
+                        </TableCell>
                         <TableCell className="text-right whitespace-nowrap text-muted-foreground">
                           {t.length ?? "-"}
                         </TableCell>
@@ -163,6 +184,10 @@ export function ConcertDetail() {
           </>
         )}
       </section>
+
+      {tracks && tracks.tracks.length > 0 && (
+        <TrackPlayer tracks={tracks.tracks} currentIndex={playingIndex} onIndexChange={setPlayingIndex} />
+      )}
     </div>
   )
 }
