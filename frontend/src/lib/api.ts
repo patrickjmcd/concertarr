@@ -30,22 +30,9 @@ export interface ConcertWithArtist extends Concert {
   artist_name: string
 }
 
-export interface GlobalRecentItem {
-  identifier: string
-  title: string
-  date: string | null
-  creator: string | null
-  monitored: boolean
-  likely_concert: boolean
-  source: string | null
-}
-
 export interface DashboardData {
   artist_count: number
   status_counts: Record<string, number>
-  recent_concerts: ConcertWithArtist[]
-  artists: Artist[]
-  recent_global: GlobalRecentItem[]
 }
 
 export interface SearchResultItem {
@@ -92,6 +79,28 @@ export interface DiscoverArtistItem {
 export interface DiscoverArtistsResult {
   query: string
   artists: DiscoverArtistItem[]
+  error: string | null
+}
+
+export type AJSort = "recent" | "date" | "popularity"
+
+export interface AJShowItem {
+  identifier: string
+  title: string
+  date: string | null
+  creator: string | null
+  venue: string | null
+  likely_concert: boolean
+  source: string | null
+  monitored: boolean
+  concert_id: number | null
+  status: string | null
+  downloads: number | null
+}
+
+export interface AJShowsResult {
+  items: AJShowItem[]
+  total_found: number
   error: string | null
 }
 
@@ -148,4 +157,24 @@ export const api = {
 
   discoverArtists: (q: string) =>
     request<DiscoverArtistsResult>(`/discover/artists?q=${encodeURIComponent(q)}`),
+
+  getAadamJacobsShows: (q: string, page: number, rows: number, sort: AJSort) =>
+    request<AJShowsResult>(
+      `/aadamjacobs/shows?q=${encodeURIComponent(q)}&page=${page}&rows=${rows}&sort=${sort}`
+    ),
+  downloadAadamJacobsShow: (item: AJShowItem) =>
+    request<Concert>("/aadamjacobs/download", {
+      method: "POST",
+      body: JSON.stringify({
+        identifier: item.identifier,
+        creator: item.creator ?? "",
+        title: item.title,
+        date: item.date,
+        venue: item.venue,
+      }),
+    }),
+
+  getArchiveShow: (identifier: string) => request<AJShowItem>(`/archive/${identifier}`),
+  getArchiveTracks: (identifier: string) =>
+    request<TrackListResult>(`/archive/${identifier}/tracks`),
 }

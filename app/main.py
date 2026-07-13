@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
 from app.db import init_db
-from app.routers import artists, concerts, dashboard, discover
+from app.routers import aadamjacobs, archive, artists, concerts, dashboard, discover
 from app.scheduler import shutdown_scheduler, start_scheduler
 
 logging.basicConfig(level=settings.log_level)
@@ -30,6 +30,8 @@ app.include_router(dashboard.router)
 app.include_router(artists.router)
 app.include_router(concerts.router)
 app.include_router(discover.router)
+app.include_router(aadamjacobs.router)
+app.include_router(archive.router)
 
 
 @app.get("/healthz")

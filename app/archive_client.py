@@ -10,7 +10,7 @@ ADVANCED_SEARCH_URL = "https://archive.org/advancedsearch.php"
 METADATA_URL = "https://archive.org/metadata/{identifier}"
 DOWNLOAD_URL = "https://archive.org/download/{identifier}/{filename}"
 
-SEARCH_FIELDS = ["identifier", "title", "date", "creator", "collection", "venue"]
+SEARCH_FIELDS = ["identifier", "title", "date", "creator", "collection", "venue", "downloads"]
 
 # Collections used by the archive.org live-recording taping community. Restricting
 # discovery/browse queries to these (rather than the much broader mediatype:(audio))
@@ -24,22 +24,34 @@ TAPER_COLLECTIONS = [
     "roiocollection",
     "cratediggers",
     "NYCTaper",
+    "aadamjacobs",
 ]
 TAPER_COLLECTIONS_QUERY = "(" + " OR ".join(f"collection:({c})" for c in TAPER_COLLECTIONS) + ")"
+
+# Collections that identify one specific taper/uploader rather than a broad
+# scoping category -- excluded from _GENERIC_COLLECTION_STEMS below so they
+# surface as a "source" (e.g. "via aadamjacobs") instead of being filtered out.
+NAMED_TAPER_COLLECTIONS = ["NYCTaper", "aadamjacobs"]
+_named_taper_collections_lower = {c.lower() for c in NAMED_TAPER_COLLECTIONS}
 
 # Generic collection tags that don't identify a specific taper/uploader -- most of
 # the TAPER_COLLECTIONS scoping tags (broad categories, not a "who uploaded this"
 # identity) plus catch-alls like opensource_audio/community. Matched by prefix since
 # archive.org uses sub-variants (folksoundomy_music_unsorted, hifidelity_potpourri,
-# etc). NYCTaper is deliberately excluded here: unlike the others, it identifies one
-# specific taper, so it's worth surfacing as a "source" like "aadamjacobs" is.
+# etc).
 _GENERIC_COLLECTION_STEMS = [
-    c.lower() for c in TAPER_COLLECTIONS if c.lower() != "nyctaper"
+    c.lower() for c in TAPER_COLLECTIONS if c.lower() not in _named_taper_collections_lower
 ] + [
     "audio_music",
     "opensource_audio",
     "community",
 ]
+
+# The Aadam Jacobs Collection at the Live Music Archive -- recordings by
+# Chicago taper Aadam Jacobs (1980s-2000s). The app's primary discovery/
+# listening surface is scoped to this collection.
+AADAM_JACOBS_COLLECTION = "aadamjacobs"
+AADAM_JACOBS_QUERY = f"collection:({AADAM_JACOBS_COLLECTION})"
 
 
 def _is_generic_collection(tag: str) -> bool:
@@ -130,3 +142,15 @@ def get_metadata(identifier: str) -> dict:
 
 def download_url(identifier: str, filename: str) -> str:
     return DOWNLOAD_URL.format(identifier=identifier, filename=filename)
+
+
+def normalize_creator(creator: list[str] | str | None) -> str | None:
+    """archive.org's 'creator' field is sometimes a single string, sometimes a
+    list of strings (co-credited items) -- pick the first non-empty one."""
+    if isinstance(creator, str) and creator.strip():
+        return creator.strip()
+    if isinstance(creator, list):
+        for c in creator:
+            if isinstance(c, str) and c.strip():
+                return c.strip()
+    return None

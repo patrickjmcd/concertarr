@@ -44,22 +44,9 @@ class ArtistDetailOut(BaseModel):
     concerts: list[ConcertOut]
 
 
-class GlobalRecentItem(BaseModel):
-    identifier: str
-    title: str
-    date: str | None = None
-    creator: str | None = None
-    monitored: bool = False
-    likely_concert: bool = True
-    source: str | None = None
-
-
 class DashboardOut(BaseModel):
     artist_count: int
     status_counts: dict[str, int]
-    recent_concerts: list[ConcertWithArtistOut]
-    artists: list[ArtistOut]
-    recent_global: list[GlobalRecentItem]
 
 
 class SearchResultItem(BaseModel):
@@ -121,3 +108,32 @@ class DiscoverArtistsOut(BaseModel):
     query: str
     artists: list[DiscoverArtistItem]
     error: str | None = None
+
+
+class AJShowItem(BaseModel):
+    identifier: str
+    title: str
+    date: str | None = None
+    creator: str | None = None
+    venue: str | None = None
+    likely_concert: bool = True
+    source: str | None = None
+    monitored: bool = False
+    concert_id: int | None = None
+    status: str | None = None
+    downloads: int | None = None
+
+
+class AJShowsOut(BaseModel):
+    items: list[AJShowItem]
+    total_found: int = 0
+    error: str | None = None
+
+
+class AJDownloadRequest(BaseModel):
+    identifier: str
+    creator: str
+    title: str = ""
+    date: str | None = None
+    venue: str | None = None
+    collection: str | None = None

@@ -1,16 +1,18 @@
 # concertarr
 
-A Lidarr-style monitoring and auto-grab service for live concert recordings hosted on [archive.org](https://archive.org). Live recordings are scattered across many collections beyond the [Live Music Archive / etree](https://archive.org/details/etree) collection (taper-specific collections, `taperssection`, `hifidelity`, `folksoundomy`, `opensource_audio`, etc.), so concertarr searches by artist and audio media type rather than restricting to a single collection.
+A listening app and Lidarr-style monitoring/auto-grab service for live concert recordings hosted on [archive.org](https://archive.org). Its home page is a show-first browser for the [Aadam Jacobs Collection](https://archive.org/details/aadamjacobs) (recordings by Chicago taper Aadam Jacobs, 1980s-2000s) — shows there play straight from the browse feed, no setup required. Beyond that, concertarr also works as a generic archive.org monitor: live recordings are scattered across many collections beyond the [Live Music Archive / etree](https://archive.org/details/etree) collection (taper-specific collections, `taperssection`, `hifidelity`, `folksoundomy`, `opensource_audio`, etc.), so artist monitoring searches by artist and audio media type rather than restricting to a single collection.
 
-Add a band, and concertarr periodically polls archive.org for newly added recordings matching that artist, then automatically downloads the highest-priority available audio format.
+Add a band, and concertarr periodically polls archive.org for newly added recordings matching that artist, then automatically downloads the highest-priority available audio format. Playback always prefers an already-downloaded local file over streaming from archive.org.
 
 ## Features
 
+- Browse and listen to the Aadam Jacobs Collection straight from the app, no monitoring required
 - Monitor artists via an archive.org advanced-search query (defaults to `creator:("<name>") AND mediatype:(audio)`, editable per artist)
 - Background poller (configurable interval) discovers newly added matching items
 - Per-artist auto-download toggle, plus manual checkbox selection and "download all new" for artists in manual mode
 - Automatic download with configurable format preference (e.g. `Flac,VBR MP3,MP3`)
-- React + shadcn/ui frontend (dashboard, artist list/detail, concert library, manual "check now" / "retry" / "download now") talking to a FastAPI JSON API
+- In-app audio player: streams from archive.org, or from the local download once a show is downloaded
+- React + shadcn/ui frontend (Aadam Jacobs browser, artist list/detail, concert library, general archive.org discovery) talking to a FastAPI JSON API
 - SQLite storage (no external DB dependency)
 
 ## Architecture
@@ -33,11 +35,12 @@ All settings are environment variables prefixed `CONCERTARR_`:
 
 ## Running locally
 
-Backend:
+Backend. The default `CONCERTARR_DATABASE_URL` (`/app/data/...`) and `CONCERTARR_MEDIA_ROOT` (`/media/concerts`) assume the Docker container's filesystem, so override both for a bare-metal run:
 
 ```bash
 pip install -r requirements.txt
-uvicorn app.main:app --reload
+mkdir -p data media
+CONCERTARR_DATABASE_URL="sqlite:///$(pwd)/data/concertarr.db" CONCERTARR_MEDIA_ROOT="$(pwd)/media" uvicorn app.main:app --reload
 ```
 
 Frontend (dev server proxies `/api` to the backend on `:8000`):

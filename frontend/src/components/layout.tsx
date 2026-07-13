@@ -2,7 +2,7 @@ import { NavLink, Outlet } from "react-router-dom"
 import { cn } from "@/lib/utils"
 
 const navItems = [
-  { to: "/dashboard", label: "Dashboard" },
+  { to: "/aadam-jacobs", label: "Aadam Jacobs" },
   { to: "/artists", label: "Artists" },
   { to: "/concerts", label: "Library" },
   { to: "/discover", label: "Discover" },
