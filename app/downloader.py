@@ -4,7 +4,7 @@ import re
 
 import httpx
 
-from app import archive_client
+from app import archive_client, progress
 from app.config import settings
 
 log = logging.getLogger("concertarr.downloader")
@@ -38,7 +38,9 @@ def destination_dir(artist_name: str, show_date: str | None, identifier: str) ->
     return os.path.join(settings.media_root, artist_dir, show_dir)
 
 
-def download_files(identifier: str, files: list[dict], dest_dir: str) -> None:
+def download_files(
+    identifier: str, files: list[dict], dest_dir: str, concert_id: int | None = None
+) -> None:
     os.makedirs(dest_dir, exist_ok=True)
     with httpx.Client(timeout=settings.http_timeout_seconds, follow_redirects=True) as client:
         for f in files:
@@ -51,6 +53,8 @@ def download_files(identifier: str, files: list[dict], dest_dir: str) -> None:
                 with open(dest_path, "wb") as fh:
                     for chunk in resp.iter_bytes(chunk_size=1024 * 256):
                         fh.write(chunk)
+                        if concert_id is not None:
+                            progress.add_bytes(concert_id, len(chunk), filename)
 
 
 def preview_tracks(identifier: str) -> tuple[str | None, list[dict]]:
@@ -66,7 +70,18 @@ def preview_tracks(identifier: str) -> tuple[str | None, list[dict]]:
         return None, []
 
 
-def download_concert(artist_name: str, identifier: str, show_date: str | None) -> tuple[str, str]:
+def _total_size(files: list[dict]) -> int | None:
+    """Sum of each file's reported size, or None if any file's size is unknown
+    (a partial sum would understate the total and mislead a progress bar)."""
+    sizes = [f["size"] for f in files if str(f.get("size", "")).isdigit()]
+    if len(sizes) != len(files):
+        return None
+    return sum(int(s) for s in sizes)
+
+
+def download_concert(
+    artist_name: str, identifier: str, show_date: str | None, concert_id: int | None = None
+) -> tuple[str, str]:
     """Fetch metadata, pick the preferred format, download all matching files.
 
     Returns (format_used, dest_dir). Raises NoMatchingFormatError on no match.
@@ -75,5 +90,11 @@ def download_concert(artist_name: str, identifier: str, show_date: str | None) -
     files = metadata.get("files", [])
     fmt, matches = choose_files(files)
     dest_dir = destination_dir(artist_name, show_date, identifier)
-    download_files(identifier, matches, dest_dir)
+    if concert_id is not None:
+        progress.start(concert_id, _total_size(matches))
+    try:
+        download_files(identifier, matches, dest_dir, concert_id=concert_id)
+    finally:
+        if concert_id is not None:
+            progress.finish(concert_id)
     return fmt, dest_dir

@@ -29,7 +29,7 @@ def process_concert(concert_id: int) -> None:
 
         try:
             fmt, dest_dir = downloader.download_concert(
-                concert.artist.name, concert.identifier, concert.show_date
+                concert.artist.name, concert.identifier, concert.show_date, concert_id=concert_id
             )
         except NoMatchingFormatError as exc:
             concert.status = "failed"

@@ -137,3 +137,13 @@ class AJDownloadRequest(BaseModel):
     date: str | None = None
     venue: str | None = None
     collection: str | None = None
+
+
+class DownloadProgressItem(BaseModel):
+    concert_id: int
+    artist_name: str
+    title: str
+    identifier: str
+    bytes_done: int
+    bytes_total: int | None = None
+    current_file: str | None = None

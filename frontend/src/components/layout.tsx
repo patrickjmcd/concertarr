@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom"
+import { DownloadProgress } from "@/components/download-progress"
 import { cn } from "@/lib/utils"
 
 const navItems = [
@@ -33,6 +34,7 @@ export function Layout() {
       <main className="mx-auto max-w-4xl px-8 py-8">
         <Outlet />
       </main>
+      <DownloadProgress />
     </div>
   )
 }

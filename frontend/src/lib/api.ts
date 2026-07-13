@@ -104,6 +104,16 @@ export interface AJShowsResult {
   error: string | null
 }
 
+export interface DownloadProgressItem {
+  concert_id: number
+  artist_name: string
+  title: string
+  identifier: string
+  bytes_done: number
+  bytes_total: number | null
+  current_file: string | null
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`/api${path}`, {
     headers: { "Content-Type": "application/json" },
@@ -177,4 +187,6 @@ export const api = {
   getArchiveShow: (identifier: string) => request<AJShowItem>(`/archive/${identifier}`),
   getArchiveTracks: (identifier: string) =>
     request<TrackListResult>(`/archive/${identifier}/tracks`),
+
+  getActiveDownloads: () => request<DownloadProgressItem[]>("/downloads/active"),
 }
