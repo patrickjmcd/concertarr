@@ -1,23 +1,54 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Link } from "react-router-dom"
 import { Loader2 } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { formatBytes } from "@/lib/format"
 import { cn } from "@/lib/utils"
-import { api, type DownloadProgressItem } from "@/lib/api"
+import { api, type ConcertWithArtist, type DownloadProgressItem } from "@/lib/api"
+import { toast } from "sonner"
 
 const POLL_INTERVAL_MS = 2000
 
 export function DownloadProgress() {
   const [items, setItems] = useState<DownloadProgressItem[]>([])
+  // Concerts seen as "downloading" on the last poll, keyed by id -- when one
+  // drops out of that set, the download just concluded (success or failure).
+  const trackedRef = useRef<Map<number, ConcertWithArtist>>(new Map())
 
   useEffect(() => {
     let cancelled = false
 
+    async function notifyCompletion(id: number, prev: ConcertWithArtist) {
+      try {
+        const concert = await api.getConcert(id)
+        const label = `${prev.artist_name} — ${prev.title}`
+        if (concert.status === "downloaded") {
+          toast.success(`Downloaded: ${label}`)
+        } else if (concert.status === "failed") {
+          toast.error(`Failed: ${label}${concert.error ? ` — ${concert.error}` : ""}`)
+        }
+      } catch {
+        // best-effort notification; nothing actionable if this lookup fails
+      }
+    }
+
     async function poll() {
       try {
-        const result = await api.getActiveDownloads()
-        if (!cancelled) setItems(result)
+        const [progress, downloading] = await Promise.all([
+          api.getActiveDownloads(),
+          api.getConcerts("downloading"),
+        ])
+        if (cancelled) return
+        setItems(progress)
+
+        const tracked = trackedRef.current
+        const stillDownloading = new Set(downloading.map((c) => c.id))
+        for (const [id, prev] of tracked) {
+          if (!stillDownloading.has(id)) {
+            void notifyCompletion(id, prev)
+          }
+        }
+        trackedRef.current = new Map(downloading.map((c) => [c.id, c]))
       } catch {
         // transient poll failure -- keep showing the last known state
       }
