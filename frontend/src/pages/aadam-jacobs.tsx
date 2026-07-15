@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
-import { ExternalLink, Loader2, Play } from "lucide-react"
+import { ArrowDown, ArrowUp, ExternalLink, Loader2, Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -12,20 +12,21 @@ import { SourceTag } from "@/components/source-tag"
 import { TrackPlayer } from "@/components/track-player"
 import { formatCount } from "@/lib/format"
 import { cn } from "@/lib/utils"
-import { api, type AJShowItem, type AJSort, type TrackItem } from "@/lib/api"
+import { api, type AJShowItem, type AJSort, type AJSortDirection, type TrackItem } from "@/lib/api"
 import { toast } from "sonner"
 
 const ROWS_PER_PAGE = 30
 
-const SORT_OPTIONS: { value: AJSort; label: string }[] = [
-  { value: "recent", label: "Recently Added" },
-  { value: "date", label: "Show Date" },
-  { value: "popularity", label: "Popularity" },
+const SORT_OPTIONS: { value: AJSort; label: string; toggleable: boolean }[] = [
+  { value: "recent", label: "Recently Added", toggleable: true },
+  { value: "date", label: "Show Date", toggleable: true },
+  { value: "popularity", label: "Popularity", toggleable: false },
 ]
 
 export function AadamJacobs() {
   const [term, setTerm] = useState("")
   const [sort, setSort] = useState<AJSort>("recent")
+  const [direction, setDirection] = useState<AJSortDirection>("desc")
   const [items, setItems] = useState<AJShowItem[] | null>(null)
   const [totalFound, setTotalFound] = useState(0)
   const [page, setPage] = useState(1)
@@ -39,11 +40,11 @@ export function AadamJacobs() {
   const [playingTracks, setPlayingTracks] = useState<TrackItem[] | null>(null)
   const [playingIndex, setPlayingIndex] = useState<number | null>(null)
 
-  async function runSearch(q: string, sortValue: AJSort) {
+  async function runSearch(q: string, sortValue: AJSort, directionValue: AJSortDirection) {
     setLoading(true)
     setPage(1)
     try {
-      const result = await api.getAadamJacobsShows(q, 1, ROWS_PER_PAGE, sortValue)
+      const result = await api.getAadamJacobsShows(q, 1, ROWS_PER_PAGE, sortValue, directionValue)
       setItems(result.items)
       setTotalFound(result.total_found)
       setError(result.error)
@@ -56,7 +57,7 @@ export function AadamJacobs() {
     const nextPage = page + 1
     setLoadingMore(true)
     try {
-      const result = await api.getAadamJacobsShows(term, nextPage, ROWS_PER_PAGE, sort)
+      const result = await api.getAadamJacobsShows(term, nextPage, ROWS_PER_PAGE, sort, direction)
       setItems((prev) => [...(prev ?? []), ...result.items])
       setPage(nextPage)
     } finally {
@@ -65,19 +66,22 @@ export function AadamJacobs() {
   }
 
   useEffect(() => {
-    runSearch("", sort)
+    runSearch("", sort, direction)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
-    const handle = setTimeout(() => runSearch(term, sort), 400)
+    const handle = setTimeout(() => runSearch(term, sort, direction), 400)
     return () => clearTimeout(handle)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [term])
 
-  function handleSortChange(value: AJSort) {
-    setSort(value)
-    runSearch(term, value)
+  function handleSortChange(opt: (typeof SORT_OPTIONS)[number]) {
+    const nextDirection: AJSortDirection =
+      opt.value === sort && opt.toggleable ? (direction === "desc" ? "asc" : "desc") : "desc"
+    setSort(opt.value)
+    setDirection(nextDirection)
+    runSearch(term, opt.value, nextDirection)
   }
 
   function markPending(identifier: string, pending: boolean) {
@@ -151,16 +155,26 @@ export function AadamJacobs() {
           className="max-w-md"
         />
         <div className="flex items-center gap-1">
-          {SORT_OPTIONS.map((opt) => (
-            <Button
-              key={opt.value}
-              size="sm"
-              variant={sort === opt.value ? "secondary" : "ghost"}
-              onClick={() => handleSortChange(opt.value)}
-            >
-              {opt.label}
-            </Button>
-          ))}
+          {SORT_OPTIONS.map((opt) => {
+            const active = sort === opt.value
+            return (
+              <Button
+                key={opt.value}
+                size="sm"
+                variant={active ? "secondary" : "ghost"}
+                onClick={() => handleSortChange(opt)}
+              >
+                {opt.label}
+                {active &&
+                  opt.toggleable &&
+                  (direction === "desc" ? (
+                    <ArrowDown className="size-3.5" />
+                  ) : (
+                    <ArrowUp className="size-3.5" />
+                  ))}
+              </Button>
+            )
+          })}
         </div>
       </div>
 
@@ -181,6 +195,7 @@ export function AadamJacobs() {
                     <TableHead>Artist</TableHead>
                     <TableHead>Show</TableHead>
                     <TableHead className="text-right">Date</TableHead>
+                    <TableHead className="text-right">Added</TableHead>
                     <TableHead className="text-right"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -243,6 +258,9 @@ export function AadamJacobs() {
                           {item.downloads !== null && (
                             <div className="text-xs">{formatCount(item.downloads)} plays</div>
                           )}
+                        </TableCell>
+                        <TableCell className="text-right whitespace-nowrap text-muted-foreground">
+                          {item.added_date ?? "-"}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center justify-end gap-2 whitespace-nowrap">

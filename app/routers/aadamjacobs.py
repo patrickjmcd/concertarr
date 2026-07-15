@@ -17,19 +17,25 @@ router = APIRouter(prefix="/api/aadamjacobs")
 
 DEFAULT_ARTIST_QUERY_TEMPLATE = 'creator:("{name}") AND mediatype:(audio)'
 
-# "recent" (newest scans first) is the default; "date" sorts by the show's own
-# date rather than when it was added to archive.org; "popularity" uses
-# archive.org's per-item download count.
-SORT_OPTIONS = {
-    "recent": "addeddate desc",
-    "date": "date desc",
-    "popularity": "downloads desc",
+# "recent" sorts by when the item was added to archive.org (addeddate);
+# "date" sorts by the show's own date; "popularity" uses archive.org's
+# per-item download count. "recent" and "date" support toggling direction;
+# "popularity" always sorts most-popular-first regardless of direction.
+SORT_FIELDS = {
+    "recent": "addeddate",
+    "date": "date",
+    "popularity": "downloads",
 }
 
 
 @router.get("/shows", response_model=AJShowsOut)
 def aadam_jacobs_shows(
-    q: str = "", page: int = 1, rows: int = 30, sort: str = "recent", db: Session = Depends(get_db)
+    q: str = "",
+    page: int = 1,
+    rows: int = 30,
+    sort: str = "recent",
+    direction: str = "desc",
+    db: Session = Depends(get_db),
 ):
     term = q.strip()
     query = (
@@ -37,7 +43,9 @@ def aadam_jacobs_shows(
         if term
         else archive_client.AADAM_JACOBS_QUERY
     )
-    archive_sort = SORT_OPTIONS.get(sort, SORT_OPTIONS["recent"])
+    field = SORT_FIELDS.get(sort, SORT_FIELDS["recent"])
+    dir_ = direction if direction in ("asc", "desc") else "desc"
+    archive_sort = f"{field} {dir_}"
     try:
         docs, total_found = archive_client.search(query, rows=rows, page=page, sort=archive_sort)
         error = None
@@ -65,6 +73,7 @@ def aadam_jacobs_shows(
                 identifier=identifier,
                 title=d.get("title", identifier),
                 date=(d.get("date") or "")[:10] or None,
+                added_date=(d.get("addeddate") or "")[:10] or None,
                 creator=creator,
                 venue=d.get("venue"),
                 likely_concert=looks_like_concert(d.get("title")),

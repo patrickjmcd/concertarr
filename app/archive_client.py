@@ -10,7 +10,16 @@ ADVANCED_SEARCH_URL = "https://archive.org/advancedsearch.php"
 METADATA_URL = "https://archive.org/metadata/{identifier}"
 DOWNLOAD_URL = "https://archive.org/download/{identifier}/{filename}"
 
-SEARCH_FIELDS = ["identifier", "title", "date", "creator", "collection", "venue", "downloads"]
+SEARCH_FIELDS = [
+    "identifier",
+    "title",
+    "date",
+    "creator",
+    "collection",
+    "venue",
+    "downloads",
+    "addeddate",
+]
 
 # Collections used by the archive.org live-recording taping community. Restricting
 # discovery/browse queries to these (rather than the much broader mediatype:(audio))

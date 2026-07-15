@@ -83,11 +83,13 @@ export interface DiscoverArtistsResult {
 }
 
 export type AJSort = "recent" | "date" | "popularity"
+export type AJSortDirection = "asc" | "desc"
 
 export interface AJShowItem {
   identifier: string
   title: string
   date: string | null
+  added_date: string | null
   creator: string | null
   venue: string | null
   likely_concert: boolean
@@ -168,9 +170,15 @@ export const api = {
   discoverArtists: (q: string) =>
     request<DiscoverArtistsResult>(`/discover/artists?q=${encodeURIComponent(q)}`),
 
-  getAadamJacobsShows: (q: string, page: number, rows: number, sort: AJSort) =>
+  getAadamJacobsShows: (
+    q: string,
+    page: number,
+    rows: number,
+    sort: AJSort,
+    direction: AJSortDirection
+  ) =>
     request<AJShowsResult>(
-      `/aadamjacobs/shows?q=${encodeURIComponent(q)}&page=${page}&rows=${rows}&sort=${sort}`
+      `/aadamjacobs/shows?q=${encodeURIComponent(q)}&page=${page}&rows=${rows}&sort=${sort}&direction=${direction}`
     ),
   downloadAadamJacobsShow: (item: AJShowItem) =>
     request<Concert>("/aadamjacobs/download", {

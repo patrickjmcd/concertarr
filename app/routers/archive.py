@@ -36,6 +36,7 @@ def archive_show(identifier: str, db: Session = Depends(get_db)):
         identifier=identifier,
         title=metadata.get("title", identifier),
         date=(metadata.get("date") or "")[:10] or None,
+        added_date=(metadata.get("addeddate") or "")[:10] or None,
         creator=creator,
         venue=metadata.get("venue"),
         likely_concert=looks_like_concert(metadata.get("title")),

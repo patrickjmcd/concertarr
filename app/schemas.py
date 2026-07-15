@@ -114,6 +114,7 @@ class AJShowItem(BaseModel):
     identifier: str
     title: str
     date: str | None = None
+    added_date: str | None = None
     creator: str | None = None
     venue: str | None = None
     likely_concert: bool = True
