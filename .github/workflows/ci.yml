@@ -1,0 +1,24 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*.*.*"]
+  pull_request:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  # PRs: build the image without pushing.
+  check:
+    if: github.event_name == 'pull_request'
+    uses: patrickjmcd/workflows/.github/workflows/docker-image.yml@v1
+    with:
+      push: false
+
+  # main + short-SHA tags on main, 1.2.3 on v* tags (as before).
+  image:
+    if: github.event_name == 'push'
+    uses: patrickjmcd/workflows/.github/workflows/docker-image.yml@v1
